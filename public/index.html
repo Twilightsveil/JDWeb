@@ -1,0 +1,1031 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pinned Together</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📌</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Quicksand:wght@500;600;700&display=swap">
+<style>
+  :root{
+    --cork:#b98a56;
+    --cork-deep:#8f6b3f;
+    --cork-grain-a:rgba(0,0,0,.09);
+    --cork-grain-b:rgba(255,255,255,.07);
+    --paper:#faf3e6;
+    --paper-2:#f0e2c8;
+    --ink:#3a2c22;
+    --ink-soft:#6b5842;
+    --rose:#d5675a;
+    --rose-deep:#b3493d;
+    --sage:#6f8f5e;
+    --sky:#4f83ab;
+    --butter:#c99a34;
+    --line:rgba(58,44,34,.18);
+    --shadow:rgba(35,22,10,.35);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --cork:#5b4327;
+      --cork-deep:#3a2b18;
+      --cork-grain-a:rgba(0,0,0,.28);
+      --cork-grain-b:rgba(255,255,255,.05);
+      --paper:#352a1d;
+      --paper-2:#2b2216;
+      --ink:#f1e5cd;
+      --ink-soft:#c9b795;
+      --rose:#e2897a;
+      --rose-deep:#c96a52;
+      --sage:#96ab84;
+      --sky:#8fb8d8;
+      --butter:#dcb95d;
+      --line:rgba(241,229,205,.16);
+      --shadow:rgba(0,0,0,.55);
+    }
+  }
+  :root[data-theme="dark"]{
+    --cork:#5b4327;
+    --cork-deep:#3a2b18;
+    --cork-grain-a:rgba(0,0,0,.28);
+    --cork-grain-b:rgba(255,255,255,.05);
+    --paper:#352a1d;
+    --paper-2:#2b2216;
+    --ink:#f1e5cd;
+    --ink-soft:#c9b795;
+    --rose:#e2897a;
+    --rose-deep:#c96a52;
+    --sage:#96ab84;
+    --sky:#8fb8d8;
+    --butter:#dcb95d;
+    --line:rgba(241,229,205,.16);
+    --shadow:rgba(0,0,0,.55);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background-color:var(--cork);
+    background-image:
+      radial-gradient(circle at 10% 20%, var(--cork-grain-a) 1px, transparent 1.6px),
+      radial-gradient(circle at 55% 65%, var(--cork-grain-a) 1px, transparent 1.6px),
+      radial-gradient(circle at 80% 15%, var(--cork-grain-b) 1px, transparent 1.6px),
+      radial-gradient(circle at 30% 85%, var(--cork-grain-a) 1px, transparent 1.6px),
+      radial-gradient(circle at 92% 88%, var(--cork-grain-a) 1px, transparent 1.6px),
+      radial-gradient(circle at 68% 40%, var(--cork-grain-b) 1px, transparent 1.6px);
+    background-size:37px 37px,53px 53px,29px 29px,41px 41px,61px 61px,47px 47px;
+    color:var(--ink);
+    font-family:"Quicksand",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:"Caveat",cursive;font-weight:700;text-wrap:balance;margin:0;}
+  .app{max-width:1080px;margin:0 auto;padding:2rem 1.25rem 4rem;}
+
+  .hero{text-align:center;padding:1rem 0 1.75rem;}
+  .hero h1{font-size:clamp(2.6rem,6vw,4rem);color:var(--rose-deep);}
+  .hero .tagline{margin:.35rem 0 1rem;color:var(--ink-soft);font-size:1rem;}
+  .who-chip{
+    font-family:"Quicksand";font-weight:600;font-size:.9rem;
+    background:var(--paper);color:var(--ink);border:1px solid var(--line);
+    border-radius:999px;padding:.4rem .9rem .4rem .7rem;cursor:pointer;
+    display:inline-flex;align-items:center;gap:.4rem;
+    box-shadow:0 2px 6px var(--shadow);
+  }
+  .who-chip::before{
+    content:'';width:.6rem;height:.6rem;border-radius:50%;
+    background:var(--who-color, var(--rose));display:inline-block;
+  }
+  .who-chip:hover{filter:brightness(1.05);}
+
+  .banner{
+    max-width:640px;margin:0 auto 1.5rem;padding:.7rem 1rem;border-radius:10px;
+    background:var(--paper-2);border:1px solid var(--line);color:var(--ink-soft);
+    font-size:.85rem;text-align:center;
+  }
+
+  .doodle-strip{
+    position:relative;background:var(--paper);border-radius:14px;
+    padding:1.1rem 1.25rem 1.3rem;margin-bottom:2.5rem;
+    box-shadow:0 8px 22px var(--shadow), 0 1px 0 var(--line) inset;
+  }
+  .tape{
+    position:absolute;top:-14px;width:74px;height:26px;
+    background:linear-gradient(var(--butter), var(--butter));
+    opacity:.55;box-shadow:0 2px 3px var(--shadow);
+  }
+  .tape-left{left:6%;transform:rotate(-7deg);}
+  .tape-right{right:6%;transform:rotate(6deg);}
+  .doodle-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:.4rem;margin-bottom:.6rem;}
+  .doodle-head h2{font-size:1.7rem;color:var(--ink);}
+  .doodle-date{font-size:.8rem;color:var(--ink-soft);font-weight:600;letter-spacing:.03em;text-transform:uppercase;}
+  .doodle-canvas{
+    display:block;width:100%;height:220px;border-radius:10px;
+    background:var(--paper-2);border:1px solid var(--line);
+    touch-action:none;cursor:crosshair;
+  }
+  .doodle-toolbar{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin-top:.7rem;}
+  .pen-colors{display:flex;gap:.4rem;}
+  .doodle-toolbar input[type="range"]{width:100px;}
+  .doodle-hint{font-size:.85rem;color:var(--rose-deep);font-weight:600;margin:.5rem 0 0;}
+
+  .swatch{
+    width:1.5rem;height:1.5rem;border-radius:50%;border:2px solid transparent;
+    background:var(--sw);cursor:pointer;padding:0;
+  }
+  .swatch.selected{border-color:var(--ink);box-shadow:0 0 0 2px var(--paper);}
+
+  .tool-btn{
+    font-family:"Quicksand";font-weight:600;font-size:.85rem;
+    background:var(--paper-2);color:var(--ink);border:1px solid var(--line);
+    border-radius:8px;padding:.45rem .8rem;cursor:pointer;
+  }
+  .tool-btn:hover{filter:brightness(1.06);}
+  .tool-btn.subtle{background:transparent;}
+  .tool-btn.primary{background:var(--rose);color:#fff;border-color:var(--rose-deep);}
+  .tool-btn.active{background:var(--sky);color:#fff;border-color:var(--sky);}
+  .tool-btn.danger{color:var(--rose-deep);}
+  .tool-btn:focus-visible, .swatch:focus-visible, .card:focus-visible, .who-chip:focus-visible{outline:2px solid var(--sky);outline-offset:2px;}
+
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem;}
+  .section-head h2{font-size:2rem;color:var(--ink);}
+  .section-head .count{font-size:.85rem;color:var(--ink-soft);font-weight:600;}
+
+  .board-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+    gap:1.6rem 1.4rem;
+  }
+
+  .card{
+    position:relative;background:var(--paper);border-radius:4px;
+    padding:.6rem .6rem 2.1rem;box-shadow:0 6px 16px var(--shadow);
+    transform:rotate(var(--rot,0deg));transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .card:hover, .card:focus-within{transform:rotate(0deg) translateY(-3px);box-shadow:0 12px 26px var(--shadow);z-index:3;}
+  .card:not(.add-card)::before{
+    content:'';position:absolute;top:-9px;left:50%;transform:translateX(-50%);
+    width:15px;height:15px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #ffb2a0, var(--rose-deep) 72%);
+    box-shadow:0 2px 4px var(--shadow);z-index:2;
+  }
+  .photo-wrap{position:relative;aspect-ratio:1/1;overflow:hidden;border-radius:2px;background:var(--paper-2);}
+  .photo-wrap img{width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none;}
+  .overlay-layer{position:absolute;inset:0;pointer-events:none;}
+  .overlay-layer > *{pointer-events:auto;}
+
+  .sticker{
+    position:absolute;font-size:1.9rem;line-height:1;cursor:grab;user-select:none;
+    touch-action:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));
+  }
+  .stickynote{
+    position:absolute;width:86px;min-height:58px;padding:.35rem .45rem;
+    font-family:"Caveat";font-size:1.05rem;line-height:1.15;color:#3a2c22;
+    box-shadow:1px 3px 6px rgba(0,0,0,.35);border-radius:1px 1px 8px 1px;
+    touch-action:none;word-break:break-word;
+  }
+  .mini-x{
+    position:absolute;top:-8px;right:-8px;width:18px;height:18px;border-radius:50%;
+    background:var(--ink);color:var(--paper);border:none;font-size:.7rem;line-height:1;
+    cursor:pointer;opacity:0;transition:opacity .15s;
+  }
+  .sticker:hover .mini-x, .stickynote:hover .mini-x, .sticker:focus-within .mini-x, .stickynote:focus-within .mini-x{opacity:1;}
+
+  .caption{display:flex;justify-content:space-between;align-items:baseline;padding:.5rem .25rem 0;font-size:.8rem;}
+  .caption .author{font-weight:700;font-family:"Caveat";font-size:1.15rem;}
+  .caption .date{color:var(--ink-soft);}
+
+  .tools{
+    position:absolute;left:0;right:0;top:100%;margin-top:.4rem;
+    background:var(--paper);border:1px solid var(--line);border-radius:8px;
+    padding:.5rem;box-shadow:0 8px 18px var(--shadow);
+    display:none;flex-direction:column;gap:.4rem;z-index:5;
+  }
+  .card.open .tools{display:flex;}
+  .stickers-row{display:flex;flex-wrap:wrap;gap:.2rem;}
+  .chip{background:transparent;border:none;font-size:1.2rem;cursor:pointer;border-radius:6px;padding:.15rem .25rem;}
+  .chip:hover{background:var(--paper-2);}
+  .tools-actions{display:flex;justify-content:space-between;gap:.4rem;}
+
+  .decorate-toggle{
+    position:absolute;bottom:.35rem;right:.5rem;background:transparent;border:none;
+    font-size:.9rem;cursor:pointer;color:var(--ink-soft);
+  }
+
+  .add-card{
+    aspect-ratio:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:.3rem;min-height:100%;border:2px dashed var(--line);background:var(--paper-2);
+    color:var(--ink-soft);font-family:"Quicksand";font-weight:600;cursor:pointer;
+    padding-bottom:.6rem;
+  }
+  .add-card .plus{font-size:2.4rem;font-family:"Caveat";color:var(--rose-deep);line-height:1;}
+  .add-card:hover{color:var(--ink);border-color:var(--rose-deep);}
+
+  .archive-section{margin-top:3rem;}
+
+  .drive-section{margin-top:3rem;}
+  .drive-hint{color:var(--ink-soft);font-size:.85rem;margin:-.5rem 0 1rem;}
+  #driveList{display:flex;flex-direction:column;gap:1.5rem;}
+  .drive-current{display:flex;flex-direction:column;gap:.75rem;}
+  .drive-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1.1rem;}
+  .drive-month-label{font-size:.85rem;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
+  .drive-item{
+    background:var(--paper);border-radius:10px;padding:.7rem;box-shadow:0 4px 12px var(--shadow);
+    display:flex;flex-direction:column;gap:.5rem;
+  }
+  .drive-thumb{
+    aspect-ratio:4/3;border-radius:6px;overflow:hidden;background:var(--paper-2);
+    display:flex;align-items:center;justify-content:center;font-size:2.2rem;
+  }
+  .drive-thumb img, .drive-thumb video{width:100%;height:100%;object-fit:cover;display:block;}
+  .drive-meta{font-size:.8rem;color:var(--ink-soft);display:flex;justify-content:space-between;gap:.4rem;}
+  .drive-name{font-weight:600;color:var(--ink);font-size:.85rem;word-break:break-word;}
+  .drive-actions{display:flex;justify-content:space-between;gap:.4rem;}
+  .drive-actions a{color:var(--sky);font-weight:600;font-size:.8rem;text-decoration:none;}
+  .drive-actions a:hover{text-decoration:underline;}
+  .empty-note{color:var(--ink-soft);font-size:.9rem;}
+  .archive-month{
+    background:var(--paper);border-radius:10px;margin-bottom:1rem;
+    box-shadow:0 4px 12px var(--shadow);overflow:hidden;
+  }
+  .archive-month summary{
+    list-style:none;cursor:pointer;padding:.8rem 1.1rem;
+    display:flex;align-items:center;justify-content:space-between;gap:.6rem;
+  }
+  .archive-month summary::-webkit-details-marker{display:none;}
+  .archive-month summary::after{content:'▸';color:var(--ink-soft);transition:transform .15s;}
+  .archive-month[open] summary::after{transform:rotate(90deg);}
+  .archive-month .ribbon{font-family:"Caveat";font-size:1.5rem;color:var(--rose-deep);}
+  .archive-month .count{font-size:.8rem;color:var(--ink-soft);}
+  .archive-grid{padding:.3rem 1.1rem 1.3rem;}
+
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(20,14,8,.55);display:flex;
+    align-items:center;justify-content:center;padding:1rem;z-index:50;
+  }
+  .modal{
+    background:var(--paper);border-radius:14px;padding:1.3rem;width:min(360px,100%);
+    box-shadow:0 20px 50px rgba(0,0,0,.5);
+  }
+  .modal h3{font-size:1.6rem;margin-bottom:.7rem;color:var(--ink);}
+  .modal input[type="text"], .modal textarea{
+    width:100%;font-family:"Quicksand";font-size:.95rem;padding:.55rem .65rem;
+    border-radius:8px;border:1px solid var(--line);background:var(--paper-2);color:var(--ink);
+    margin-bottom:.7rem;resize:vertical;
+  }
+  .swatch-row{display:flex;gap:.5rem;margin-bottom:1rem;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:.5rem;}
+
+  .toast{
+    position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:var(--paper);padding:.6rem 1.1rem;border-radius:999px;
+    font-size:.85rem;box-shadow:0 8px 20px rgba(0,0,0,.4);z-index:60;
+  }
+
+  .foot{text-align:center;color:var(--ink-soft);font-size:.85rem;margin-top:3rem;}
+
+  [hidden]{display:none!important;}
+
+  @media (prefers-reduced-motion: reduce){
+    .card, .archive-month summary::after{transition:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="hero">
+    <h1>Pinned Together</h1>
+    <p class="tagline">a corkboard for two — doodle today, pin your memories, watch the months stack up</p>
+    <button id="whoBtn" class="who-chip" type="button">👤 <span id="whoName">set your name</span></button>
+  </header>
+
+  <div id="syncBanner" class="banner" hidden></div>
+
+  <section class="doodle-strip" aria-label="Today's doodle">
+    <div class="tape tape-left"></div>
+    <div class="tape tape-right"></div>
+    <div class="doodle-head">
+      <h2>Today's Doodle</h2>
+      <span class="doodle-date" id="doodleDate"></span>
+    </div>
+    <canvas id="doodleCanvas" class="doodle-canvas" aria-label="Shared drawing area, resets every day"></canvas>
+    <div class="doodle-toolbar">
+      <div class="pen-colors" id="penColors" aria-label="Pen color"></div>
+      <input type="range" id="penWidth" min="2" max="14" value="4" aria-label="Pen thickness">
+      <button id="eraserBtn" class="tool-btn" type="button">🧽 Eraser</button>
+      <button id="addTextBtn" class="tool-btn" type="button">🖊 Leave a note</button>
+      <button id="clearDoodleBtn" class="tool-btn subtle" type="button">Clear all</button>
+    </div>
+    <p class="doodle-hint" id="doodleHint" hidden>Tap anywhere on the board above to place your note.</p>
+  </section>
+
+  <section class="board-section">
+    <div class="section-head">
+      <h2 id="monthHeading">This Month</h2>
+      <span class="count" id="monthCount"></span>
+    </div>
+    <div class="board-grid" id="boardGrid">
+      <button class="card add-card" id="addPhotoBtn" type="button">
+        <span class="plus">+</span>
+        <span>Pin a photo</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="archive-section">
+    <div class="section-head">
+      <h2>Archive</h2>
+      <span class="count">collected at the end of each month</span>
+    </div>
+    <div id="archiveList" class="archive-list"><p class="empty-note">Nothing archived yet — this month's pins move here once the calendar turns.</p></div>
+  </section>
+
+  <section class="drive-section">
+    <div class="section-head">
+      <h2>☁️ Our Drive</h2>
+      <button id="driveUploadBtn" class="tool-btn primary" type="button">Upload files</button>
+    </div>
+    <p class="drive-hint">Backed by our own Nextcloud — full-size photos, videos, anything else.</p>
+    <div id="driveList"><p class="empty-note">Loading…</p></div>
+  </section>
+
+  <footer class="foot">made with 📌 for us</footer>
+</div>
+
+<input type="file" id="uploadInput" accept="image/*" hidden>
+<input type="file" id="driveInput" accept="image/*,video/*" multiple hidden>
+
+<div class="modal-backdrop" id="nameModal" hidden>
+  <div class="modal">
+    <h3>Who is pinning?</h3>
+    <input type="text" id="nameInput" maxlength="24" placeholder="Your name">
+    <div class="swatch-row" id="nameColors"></div>
+    <div class="modal-actions">
+      <button id="nameSubmit" class="tool-btn primary" type="button">Let's go</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="noteModal" hidden>
+  <div class="modal">
+    <h3 id="noteModalTitle">Leave a note</h3>
+    <textarea id="noteText" maxlength="140" rows="3" placeholder="Say something sweet..."></textarea>
+    <div class="swatch-row" id="noteColors"></div>
+    <div class="modal-actions">
+      <button id="noteCancel" class="tool-btn subtle" type="button">Cancel</button>
+      <button id="noteSubmit" class="tool-btn primary" type="button">Add</button>
+    </div>
+  </div>
+</div>
+
+<div id="uploadingToast" class="toast" hidden>Pinning your photo…</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var NAME_KEY = 'pt_name', COLOR_KEY = 'pt_color';
+  var PALETTE = [
+    {key:'ink', hex:'#3a2c22', label:'Ink'},
+    {key:'rose', hex:'#c9584a', label:'Rose'},
+    {key:'sage', hex:'#5f7d4f', label:'Sage'},
+    {key:'sky', hex:'#3f6f96', label:'Sky'},
+    {key:'butter', hex:'#b78826', label:'Butter'}
+  ];
+  var STICKY_COLORS = ['#f6e49b','#f3c6c6','#c6e3bd','#c3dbf0'];
+  var STICKERS = ['❤️','💕','⭐','✨','😘','🎉','📌','🌸','☕','🐾','🔥','😂'];
+  var POLL_MS = 6000;
+
+  function monthLabel(ym){ var p=ym.split('-').map(Number); return new Date(p[0],p[1]-1,1).toLocaleString(undefined,{month:'long',year:'numeric'}); }
+  function formatDate(iso){ try{ return new Date(iso).toLocaleDateString(undefined,{month:'short',day:'numeric'}); }catch(e){ return ''; } }
+  function formatDoodleDate(ymd){ try{ var p=ymd.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]).toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric'}); }catch(e){ return ymd; } }
+  function currentMonth(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+  function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function hashRot(id){ var h=0; for(var i=0;i<id.length;i++){ h=(h*31+id.charCodeAt(i))|0; } return (Math.abs(h)%700)/100-3.5; }
+  function debounce(fn,ms){ var t; return function(){ var a=arguments; clearTimeout(t); t=setTimeout(function(){ fn.apply(null,a); },ms); }; }
+
+  var notes = [];
+  var doodle = { date: '', items: [] };
+
+  var boardGrid = document.getElementById('boardGrid');
+  var archiveList = document.getElementById('archiveList');
+  var doodleCanvas = document.getElementById('doodleCanvas');
+  var ctx = doodleCanvas.getContext('2d');
+  var cssW = 0, cssH = 0;
+  var penColor = PALETTE[0].hex;
+  var penWidth = 4;
+  var drawing = false, currentStroke = null;
+  var textModeArmed = false, pendingDoodleText = null;
+  var eraserMode = false;
+
+  var noteModal = document.getElementById('noteModal');
+  var noteModalMode = 'photo';
+  var noteModalTargetId = null;
+  var selectedNoteColor = STICKY_COLORS[0];
+
+  // ---------- networking helpers ----------
+  var bannerTimer = null;
+  function showError(msg){
+    var banner = document.getElementById('syncBanner');
+    banner.textContent = msg;
+    banner.hidden = false;
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(function(){ banner.hidden = true; }, 5000);
+  }
+  async function api(path, options){
+    var res = await fetch(path, options);
+    if(!res.ok){ throw new Error('Request failed: ' + path + ' (' + res.status + ')'); }
+    return res;
+  }
+
+  // ---------- name / identity ----------
+  function getName(){ return localStorage.getItem(NAME_KEY) || 'Someone'; }
+  function getColorHex(){
+    var key = localStorage.getItem(COLOR_KEY) || 'rose';
+    var found = PALETTE.filter(function(p){ return p.key===key; })[0];
+    return found ? found.hex : PALETTE[1].hex;
+  }
+  function updateWhoChip(){
+    document.getElementById('whoName').textContent = getName();
+    document.getElementById('whoBtn').style.setProperty('--who-color', getColorHex());
+  }
+  function renderIdentitySwatches(container, selectedKey, onPick){
+    container.innerHTML = PALETTE.map(function(p){
+      return '<button type="button" class="swatch'+(p.key===selectedKey?' selected':'')+'" data-key="'+p.key+'" style="--sw:'+p.hex+'" title="'+p.label+'" aria-label="'+p.label+'"></button>';
+    }).join('');
+    Array.prototype.forEach.call(container.querySelectorAll('.swatch'), function(btn){
+      btn.addEventListener('click', function(){
+        Array.prototype.forEach.call(container.querySelectorAll('.swatch'), function(b){ b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        onPick(btn.dataset.key);
+      });
+    });
+  }
+  var nameModal = document.getElementById('nameModal');
+  var pendingNameColor = 'rose';
+  function openNameModal(){
+    document.getElementById('nameInput').value = localStorage.getItem(NAME_KEY) || '';
+    pendingNameColor = localStorage.getItem(COLOR_KEY) || 'rose';
+    renderIdentitySwatches(document.getElementById('nameColors'), pendingNameColor, function(k){ pendingNameColor = k; });
+    nameModal.hidden = false;
+    document.getElementById('nameInput').focus();
+  }
+  document.getElementById('whoBtn').addEventListener('click', openNameModal);
+  document.getElementById('nameSubmit').addEventListener('click', function(){
+    var val = document.getElementById('nameInput').value.trim() || 'Someone';
+    localStorage.setItem(NAME_KEY, val);
+    localStorage.setItem(COLOR_KEY, pendingNameColor);
+    nameModal.hidden = true;
+    updateWhoChip();
+  });
+  nameModal.addEventListener('click', function(e){ if(e.target===nameModal) nameModal.hidden = true; });
+
+  // ---------- note modal (photo sticky-note or doodle text) ----------
+  function renderStickySwatches(container, selectedHex, onPick){
+    container.innerHTML = STICKY_COLORS.map(function(hex){
+      return '<button type="button" class="swatch'+(hex===selectedHex?' selected':'')+'" data-hex="'+hex+'" style="--sw:'+hex+'"></button>';
+    }).join('');
+    Array.prototype.forEach.call(container.querySelectorAll('.swatch'), function(btn){
+      btn.addEventListener('click', function(){
+        Array.prototype.forEach.call(container.querySelectorAll('.swatch'), function(b){ b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        onPick(btn.dataset.hex);
+      });
+    });
+  }
+  function renderInkSwatches(container, selectedHex, onPick){
+    container.innerHTML = PALETTE.map(function(p){
+      return '<button type="button" class="swatch'+(p.hex===selectedHex?' selected':'')+'" data-hex="'+p.hex+'" style="--sw:'+p.hex+'" title="'+p.label+'"></button>';
+    }).join('');
+    Array.prototype.forEach.call(container.querySelectorAll('.swatch'), function(btn){
+      btn.addEventListener('click', function(){
+        Array.prototype.forEach.call(container.querySelectorAll('.swatch'), function(b){ b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        onPick(btn.dataset.hex);
+      });
+    });
+  }
+  function openNoteComposer(photoId){
+    noteModalMode = 'photo';
+    noteModalTargetId = photoId;
+    document.getElementById('noteModalTitle').textContent = 'Add a sticky note';
+    document.getElementById('noteText').value = '';
+    selectedNoteColor = STICKY_COLORS[0];
+    renderStickySwatches(document.getElementById('noteColors'), selectedNoteColor, function(hex){ selectedNoteColor = hex; });
+    noteModal.hidden = false;
+    document.getElementById('noteText').focus();
+  }
+  function openDoodleTextComposer(){
+    setEraserMode(false);
+    noteModalMode = 'doodle';
+    document.getElementById('noteModalTitle').textContent = 'Leave a note on the board';
+    document.getElementById('noteText').value = '';
+    selectedNoteColor = penColor;
+    renderInkSwatches(document.getElementById('noteColors'), selectedNoteColor, function(hex){ selectedNoteColor = hex; });
+    noteModal.hidden = false;
+    document.getElementById('noteText').focus();
+  }
+  document.getElementById('addTextBtn').addEventListener('click', openDoodleTextComposer);
+  document.getElementById('noteCancel').addEventListener('click', function(){ noteModal.hidden = true; });
+  noteModal.addEventListener('click', function(e){ if(e.target===noteModal) noteModal.hidden = true; });
+  document.getElementById('noteSubmit').addEventListener('click', function(){
+    var text = document.getElementById('noteText').value.trim();
+    if(!text) return;
+    var color = selectedNoteColor;
+    noteModal.hidden = true;
+    if(noteModalMode==='photo'){ addNoteToPhoto(noteModalTargetId, text, color); }
+    else{
+      pendingDoodleText = {text:text, color:color};
+      textModeArmed = true;
+      document.getElementById('doodleHint').hidden = false;
+    }
+  });
+
+  // ---------- data mutation ----------
+  function persistNoteField(id, patch){
+    api('/api/notes/' + id, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(patch)
+    }).catch(function(err){ console.warn(err); showError('Could not save that change — check your connection.'); });
+  }
+  function findNote(id){ return notes.filter(function(n){ return n.id===id; })[0]; }
+
+  function addSticker(noteId, emoji){
+    var note = findNote(noteId); if(!note) return;
+    var item = { emoji:emoji, x:0.42+Math.random()*0.16, y:0.42+Math.random()*0.16, rot:Math.round(Math.random()*36-18) };
+    var stickers = (note.stickers||[]).concat([item]);
+    note.stickers = stickers;
+    renderBoard();
+    persistNoteField(noteId, {stickers:stickers});
+  }
+  function removeSticker(noteId, idx){
+    var note = findNote(noteId); if(!note) return;
+    var stickers = (note.stickers||[]).slice(); stickers.splice(idx,1);
+    note.stickers = stickers;
+    renderBoard();
+    persistNoteField(noteId, {stickers:stickers});
+  }
+  function addNoteToPhoto(noteId, text, color){
+    var note = findNote(noteId); if(!note) return;
+    var item = { text:text, color:color, x:0.3+Math.random()*0.2, y:0.3+Math.random()*0.2, author:getName() };
+    var arr = (note.notes||[]).concat([item]);
+    note.notes = arr;
+    renderBoard();
+    persistNoteField(noteId, {notes:arr});
+  }
+  function removeNoteItem(noteId, idx){
+    var note = findNote(noteId); if(!note) return;
+    var arr = (note.notes||[]).slice(); arr.splice(idx,1);
+    note.notes = arr;
+    renderBoard();
+    persistNoteField(noteId, {notes:arr});
+  }
+  function deletePhoto(noteId){
+    notes = notes.filter(function(n){ return n.id!==noteId; });
+    renderBoard();
+    api('/api/notes/' + noteId, {method:'DELETE'}).catch(function(err){
+      console.warn(err); showError('Could not remove that photo — check your connection.');
+    });
+  }
+
+  // ---------- board rendering ----------
+  function noteCardHtml(n){
+    var stickersHtml = (n.stickers||[]).map(function(s,i){
+      return '<div class="sticker" data-idx="'+i+'" style="left:'+(s.x*100)+'%;top:'+(s.y*100)+'%;transform:translate(-50%,-50%) rotate('+s.rot+'deg)">'+s.emoji+
+        '<button class="mini-x" type="button" data-remove-sticker="'+i+'" aria-label="Remove sticker">×</button></div>';
+    }).join('');
+    var notesHtml = (n.notes||[]).map(function(note,i){
+      return '<div class="stickynote" data-idx="'+i+'" style="left:'+(note.x*100)+'%;top:'+(note.y*100)+'%;background:'+note.color+';transform:translate(-50%,-50%) rotate('+((i%2?1:-1)*2)+'deg)">'+escapeHtml(note.text)+
+        '<button class="mini-x" type="button" data-remove-note="'+i+'" aria-label="Remove note">×</button></div>';
+    }).join('');
+    var chips = STICKERS.map(function(e){ return '<button type="button" class="chip" data-add-sticker="'+e+'">'+e+'</button>'; }).join('');
+    return '<div class="card" style="--rot:'+hashRot(n.id)+'deg" data-id="'+n.id+'">'+
+      '<div class="photo-wrap">'+
+        '<img src="'+n.image+'" alt="A shared memory" draggable="false" loading="lazy">'+
+        '<div class="overlay-layer">'+stickersHtml+notesHtml+'</div>'+
+      '</div>'+
+      '<div class="caption">'+
+        '<span class="author" style="color:'+(n.authorColor||'inherit')+'">'+escapeHtml(n.author||'Someone')+'</span>'+
+        '<span class="date">'+formatDate(n.createdAt)+'</span>'+
+      '</div>'+
+      '<button type="button" class="decorate-toggle" data-decorate>🏷️ decorate</button>'+
+      '<div class="tools">'+
+        '<div class="stickers-row">'+chips+'</div>'+
+        '<div class="tools-actions">'+
+          '<button type="button" class="tool-btn" data-add-note-btn>✏️ Note</button>'+
+          '<button type="button" class="tool-btn danger" data-delete-btn>🗑 Remove</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }
+
+  function renderBoard(){
+    var cur = currentMonth();
+    document.getElementById('monthHeading').textContent = 'This Month — ' + monthLabel(cur);
+    var currentNotes = notes.filter(function(n){ return n.month === cur; });
+    document.getElementById('monthCount').textContent = currentNotes.length + (currentNotes.length===1 ? ' pin' : ' pins');
+    var addBtn = document.getElementById('addPhotoBtn');
+    boardGrid.innerHTML = '';
+    boardGrid.appendChild(addBtn);
+    boardGrid.insertAdjacentHTML('beforeend', currentNotes.map(noteCardHtml).join(''));
+    renderArchive();
+  }
+
+  function renderArchive(){
+    var cur = currentMonth();
+    var groups = {};
+    notes.forEach(function(n){
+      if(n.month===cur) return;
+      (groups[n.month] = groups[n.month]||[]).push(n);
+    });
+    var months = Object.keys(groups).sort().reverse();
+    if(!months.length){
+      archiveList.innerHTML = '<p class="empty-note">Nothing archived yet — this month\'s pins move here once the calendar turns.</p>';
+      return;
+    }
+    archiveList.innerHTML = months.map(function(m){
+      return '<details class="archive-month">'+
+        '<summary><span class="ribbon">'+monthLabel(m)+'</span><span class="count">'+groups[m].length+' pinned</span></summary>'+
+        '<div class="board-grid archive-grid">'+groups[m].map(noteCardHtml).join('')+'</div>'+
+      '</details>';
+    }).join('');
+  }
+
+  // ---------- delegated interactions on cards ----------
+  document.addEventListener('click', function(e){
+    var card = e.target.closest ? e.target.closest('.card') : null;
+    if(!card || card.id==='addPhotoBtn') return;
+    var id = card.dataset.id;
+    if(e.target.matches('[data-decorate]')){ card.classList.toggle('open'); }
+    else if(e.target.matches('[data-add-sticker]')){ addSticker(id, e.target.getAttribute('data-add-sticker')); }
+    else if(e.target.matches('[data-remove-sticker]')){ removeSticker(id, Number(e.target.getAttribute('data-remove-sticker'))); }
+    else if(e.target.matches('[data-remove-note]')){ removeNoteItem(id, Number(e.target.getAttribute('data-remove-note'))); }
+    else if(e.target.matches('[data-add-note-btn]')){ openNoteComposer(id); }
+    else if(e.target.matches('[data-delete-btn]')){ if(confirm('Remove this photo for both of you?')) deletePhoto(id); }
+  });
+
+  document.addEventListener('pointerdown', function(e){
+    var target = e.target.closest ? e.target.closest('.sticker, .stickynote') : null;
+    if(!target) return;
+    if(e.target.closest('.mini-x')) return;
+    var card = target.closest('.card');
+    var overlay = target.parentElement;
+    var noteId = card.dataset.id;
+    var idx = Number(target.dataset.idx);
+    var kind = target.classList.contains('sticker') ? 'sticker' : 'note';
+    startDrag(target, overlay, noteId, idx, kind, e);
+  });
+  function startDrag(el, overlay, noteId, idx, kind, e){
+    try{ el.setPointerCapture(e.pointerId); }catch(err){}
+    var rect = overlay.getBoundingClientRect();
+    var x=null, y=null;
+    function move(ev){
+      x = (ev.clientX-rect.left)/rect.width;
+      y = (ev.clientY-rect.top)/rect.height;
+      x = Math.min(0.96, Math.max(0.04, x));
+      y = Math.min(0.96, Math.max(0.04, y));
+      el.style.left = (x*100)+'%';
+      el.style.top = (y*100)+'%';
+    }
+    function up(){
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      if(x!=null && y!=null) commitDragEnd(noteId, idx, kind, x, y);
+    }
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up, {once:true});
+  }
+  function commitDragEnd(noteId, idx, kind, x, y){
+    var note = findNote(noteId); if(!note) return;
+    if(kind==='sticker'){
+      var stickers = (note.stickers||[]).slice();
+      if(!stickers[idx]) return;
+      stickers[idx] = Object.assign({}, stickers[idx], {x:x, y:y});
+      note.stickers = stickers;
+      persistNoteField(noteId, {stickers:stickers});
+    } else {
+      var arr = (note.notes||[]).slice();
+      if(!arr[idx]) return;
+      arr[idx] = Object.assign({}, arr[idx], {x:x, y:y});
+      note.notes = arr;
+      persistNoteField(noteId, {notes:arr});
+    }
+  }
+
+  // ---------- upload / compression ----------
+  var uploadInput = document.getElementById('uploadInput');
+  document.getElementById('addPhotoBtn').addEventListener('click', function(){ uploadInput.click(); });
+  function loadImageEl(file){
+    return new Promise(function(resolve,reject){
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function(){ resolve(img); };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+  function canvasToBlob(canvas, quality){
+    return new Promise(function(resolve){ canvas.toBlob(resolve, 'image/jpeg', quality); });
+  }
+  async function compressImage(file){
+    var img = await loadImageEl(file);
+    var maxDim = 1600, quality = 0.82, blob = null;
+    for(var i=0;i<7;i++){
+      var scale = Math.min(1, maxDim/Math.max(img.width, img.height));
+      var w = Math.max(1, Math.round(img.width*scale));
+      var h = Math.max(1, Math.round(img.height*scale));
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      blob = await canvasToBlob(canvas, quality);
+      if(blob.size < 1.8*1024*1024) break;
+      if(quality > 0.45) quality -= 0.1; else maxDim = Math.round(maxDim*0.82);
+    }
+    try{ URL.revokeObjectURL(img.src); }catch(e){}
+    return blob;
+  }
+  uploadInput.addEventListener('change', async function(e){
+    var file = e.target.files[0];
+    e.target.value = '';
+    if(!file) return;
+    var toast = document.getElementById('uploadingToast');
+    toast.hidden = false;
+    try{
+      var blob = await compressImage(file);
+      var fd = new FormData();
+      fd.append('image', blob, 'photo.jpg');
+      fd.append('author', getName());
+      fd.append('authorColor', getColorHex());
+      var res = await api('/api/notes', {method:'POST', body: fd});
+      var created = await res.json();
+      notes.unshift(created);
+      renderBoard();
+    } catch(err){
+      console.warn('upload failed', err);
+      alert('That photo could not be pinned — try a different one, or check your connection.');
+    }
+    toast.hidden = true;
+  });
+
+  // ---------- doodle canvas ----------
+  document.getElementById('penWidth').addEventListener('input', function(e){ penWidth = Number(e.target.value); });
+  function buildPenColors(){
+    var el = document.getElementById('penColors');
+    el.innerHTML = PALETTE.map(function(p,i){
+      return '<button type="button" class="swatch'+(i===0?' selected':'')+'" data-hex="'+p.hex+'" style="--sw:'+p.hex+'" title="'+p.label+'"></button>';
+    }).join('');
+    Array.prototype.forEach.call(el.querySelectorAll('.swatch'), function(btn){
+      btn.addEventListener('click', function(){
+        Array.prototype.forEach.call(el.querySelectorAll('.swatch'), function(b){ b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        penColor = btn.dataset.hex;
+        setEraserMode(false);
+      });
+    });
+  }
+  var eraserBtn = document.getElementById('eraserBtn');
+  function setEraserMode(on){
+    eraserMode = on;
+    eraserBtn.classList.toggle('active', eraserMode);
+    doodleCanvas.style.cursor = eraserMode ? 'cell' : (textModeArmed ? 'crosshair' : 'crosshair');
+  }
+  eraserBtn.addEventListener('click', function(){ setEraserMode(!eraserMode); });
+  function resizeCanvas(){
+    var rect = doodleCanvas.getBoundingClientRect();
+    var dpr = window.devicePixelRatio || 1;
+    doodleCanvas.width = Math.round(rect.width*dpr);
+    doodleCanvas.height = Math.round(rect.height*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    cssW = rect.width; cssH = rect.height;
+    redrawDoodle();
+  }
+  window.addEventListener('resize', debounce(resizeCanvas, 200));
+  function drawItem(item){
+    if(item.type==='stroke' || item.type==='erase'){
+      ctx.globalCompositeOperation = item.type==='erase' ? 'destination-out' : 'source-over';
+      ctx.strokeStyle = item.color; ctx.lineWidth = item.width;
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      item.pts.forEach(function(p,i){
+        var x = p[0]*cssW, y = p[1]*cssH;
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+      ctx.globalCompositeOperation = 'source-over';
+    } else if(item.type==='text'){
+      ctx.fillStyle = item.color;
+      ctx.font = '600 26px "Caveat", cursive';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(item.text, item.x*cssW, item.y*cssH);
+    }
+  }
+  function redrawDoodle(){
+    ctx.clearRect(0,0,cssW,cssH);
+    (doodle.items||[]).forEach(drawItem);
+  }
+  function relPos(e){
+    var rect = doodleCanvas.getBoundingClientRect();
+    return { x:(e.clientX-rect.left)/rect.width, y:(e.clientY-rect.top)/rect.height };
+  }
+  function persistDoodle(){
+    api('/api/doodle', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({items: doodle.items})
+    }).catch(function(err){ console.warn(err); showError('Could not save the doodle — check your connection.'); });
+  }
+  function commitDoodleItem(item){
+    var items = (doodle.items||[]).concat([item]);
+    if(items.length > 260) items = items.slice(items.length-260);
+    doodle = Object.assign({}, doodle, {items: items});
+    redrawDoodle();
+    persistDoodle();
+  }
+  doodleCanvas.addEventListener('pointerdown', function(e){
+    if(textModeArmed && pendingDoodleText){
+      var pos = relPos(e);
+      commitDoodleItem({type:'text', text:pendingDoodleText.text, color:pendingDoodleText.color, x:pos.x, y:pos.y});
+      textModeArmed = false; pendingDoodleText = null;
+      document.getElementById('doodleHint').hidden = true;
+      return;
+    }
+    drawing = true;
+    try{ doodleCanvas.setPointerCapture(e.pointerId); }catch(err){}
+    var p = relPos(e);
+    currentStroke = eraserMode
+      ? {type:'erase', color:'#000', width:penWidth*3.5, pts:[[p.x,p.y]]}
+      : {type:'stroke', color:penColor, width:penWidth, pts:[[p.x,p.y]]};
+  });
+  doodleCanvas.addEventListener('pointermove', function(e){
+    if(!drawing || !currentStroke) return;
+    var p = relPos(e);
+    currentStroke.pts.push([p.x,p.y]);
+    redrawDoodle();
+    drawItem(currentStroke);
+  });
+  function endStroke(){
+    if(drawing && currentStroke && currentStroke.pts.length>1){ commitDoodleItem(currentStroke); }
+    drawing = false; currentStroke = null;
+  }
+  doodleCanvas.addEventListener('pointerup', endStroke);
+  doodleCanvas.addEventListener('pointercancel', endStroke);
+  document.getElementById('clearDoodleBtn').addEventListener('click', function(){
+    if(!confirm('Clear today\'s doodle for both of you?')) return;
+    doodle = Object.assign({}, doodle, {items: []});
+    redrawDoodle();
+    persistDoodle();
+  });
+
+  // ---------- cloud drive ----------
+  var driveItems = [];
+  var DRIVE_POLL_MS = 15000;
+  var IMAGE_EXT = ['jpg','jpeg','png','gif','webp','avif','heic','bmp'];
+  var VIDEO_EXT = ['mp4','mov','webm','m4v','avi','mkv'];
+  function extOf(name){ var i = name.lastIndexOf('.'); return i<0 ? '' : name.slice(i+1).toLowerCase(); }
+  function isImageName(name){ return IMAGE_EXT.indexOf(extOf(name))>=0; }
+  function isVideoName(name){ return VIDEO_EXT.indexOf(extOf(name))>=0; }
+  function displayName(name){ return name.replace(/^\d+_/, ''); }
+  function formatBytes(n){
+    if(!n) return '0 B';
+    var units = ['B','KB','MB','GB'];
+    var i = 0;
+    while(n>=1024 && i<units.length-1){ n/=1024; i++; }
+    return (i===0 ? n : n.toFixed(1)) + ' ' + units[i];
+  }
+  function driveItemHtml(item){
+    var url = '/api/drive/' + encodeURIComponent(item.name);
+    var thumb;
+    if(isImageName(item.name)){
+      thumb = '<img src="'+url+'" alt="" loading="lazy">';
+    } else if(isVideoName(item.name)){
+      thumb = '<video src="'+url+'" controls preload="metadata"></video>';
+    } else {
+      thumb = '<span>📄</span>';
+    }
+    return '<div class="drive-item" data-name="'+escapeHtml(item.name)+'">'+
+      '<div class="drive-thumb">'+thumb+'</div>'+
+      '<div class="drive-name">'+escapeHtml(displayName(item.name))+'</div>'+
+      '<div class="drive-meta"><span>'+formatBytes(item.size)+'</span><span>'+formatDate(item.modifiedAt)+'</span></div>'+
+      '<div class="drive-actions">'+
+        '<a href="'+url+'" download="'+escapeHtml(displayName(item.name))+'">⬇ Download</a>'+
+        '<button type="button" class="tool-btn danger" data-drive-delete>🗑</button>'+
+      '</div>'+
+    '</div>';
+  }
+  function renderDrive(){
+    var list = document.getElementById('driveList');
+    if(!driveItems.length){
+      list.innerHTML = '<p class="empty-note">Nothing uploaded yet — add your first photo or video.</p>';
+      return;
+    }
+    var cur = currentMonth();
+    var currentItems = [];
+    var groups = {};
+    driveItems.forEach(function(item){
+      var m = (item.modifiedAt || '').slice(0,7) || cur;
+      if(m===cur){ currentItems.push(item); }
+      else { (groups[m] = groups[m]||[]).push(item); }
+    });
+    var months = Object.keys(groups).sort().reverse();
+
+    var html = '<div class="drive-current">' +
+      '<span class="drive-month-label">' + monthLabel(cur) + '</span>' +
+      '<div class="drive-list">' + (currentItems.length ? currentItems.map(driveItemHtml).join('') : '<p class="empty-note">Nothing pinned to the drive this month yet.</p>') + '</div>' +
+    '</div>';
+
+    html += months.map(function(m){
+      return '<details class="archive-month">' +
+        '<summary><span class="ribbon">' + monthLabel(m) + '</span><span class="count">' + groups[m].length + (groups[m].length===1 ? ' file' : ' files') + '</span></summary>' +
+        '<div class="drive-list archive-grid">' + groups[m].map(driveItemHtml).join('') + '</div>' +
+      '</details>';
+    }).join('');
+
+    list.innerHTML = html;
+  }
+  async function loadDrive(){
+    try{
+      var res = await api('/api/drive');
+      driveItems = await res.json();
+      renderDrive();
+    }catch(err){
+      console.warn(err);
+      document.getElementById('driveList').innerHTML = '<p class="empty-note">Could not reach the drive — check your connection.</p>';
+    }
+  }
+  document.getElementById('driveUploadBtn').addEventListener('click', function(){ document.getElementById('driveInput').click(); });
+  document.getElementById('driveInput').addEventListener('change', async function(e){
+    var files = Array.prototype.slice.call(e.target.files);
+    e.target.value = '';
+    if(!files.length) return;
+    var toast = document.getElementById('uploadingToast');
+    toast.textContent = 'Uploading to the drive…';
+    toast.hidden = false;
+    for(var i=0;i<files.length;i++){
+      try{
+        var fd = new FormData();
+        fd.append('file', files[i], files[i].name);
+        var res = await api('/api/drive', {method:'POST', body: fd});
+        var created = await res.json();
+        driveItems.unshift(created);
+        renderDrive();
+      }catch(err){
+        console.warn('drive upload failed', err);
+        alert('Could not upload "' + files[i].name + '" — check your connection and try again.');
+      }
+    }
+    toast.hidden = true;
+    toast.textContent = 'Pinning your photo…';
+  });
+  document.addEventListener('click', function(e){
+    if(!e.target.matches('[data-drive-delete]')) return;
+    var item = e.target.closest('.drive-item');
+    var name = item.dataset.name;
+    if(!confirm('Delete this file from the drive for both of you?')) return;
+    driveItems = driveItems.filter(function(d){ return d.name!==name; });
+    renderDrive();
+    api('/api/drive/' + encodeURIComponent(name), {method:'DELETE'}).catch(function(err){
+      console.warn(err); showError('Could not delete that file — check your connection.');
+    });
+  });
+
+  // ---------- loading from the API ----------
+  async function loadNotes(){
+    try{
+      var res = await api('/api/notes');
+      notes = await res.json();
+      renderBoard();
+    }catch(err){ console.warn(err); showError('Could not load the board — check your connection.'); }
+  }
+  async function loadDoodle(){
+    try{
+      var res = await api('/api/doodle');
+      doodle = await res.json();
+      document.getElementById('doodleDate').textContent = formatDoodleDate(doodle.date);
+      redrawDoodle();
+    }catch(err){ console.warn(err); }
+  }
+
+  // ---------- init ----------
+  async function init(){
+    updateWhoChip();
+    if(!localStorage.getItem(NAME_KEY)){ openNameModal(); }
+    buildPenColors();
+    resizeCanvas();
+
+    await Promise.all([loadNotes(), loadDoodle(), loadDrive()]);
+
+    setInterval(function(){
+      if(!document.hidden){ loadNotes(); loadDoodle(); }
+    }, POLL_MS);
+    setInterval(function(){
+      if(!document.hidden){ loadDrive(); }
+    }, DRIVE_POLL_MS);
+    document.addEventListener('visibilitychange', function(){
+      if(!document.hidden){ loadNotes(); loadDoodle(); loadDrive(); }
+    });
+  }
+  init();
+})();
+</script>
+</body>
+</html>

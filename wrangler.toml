@@ -1,0 +1,12 @@
+name = "pinned-together"
+pages_build_output_dir = "public"
+compatibility_date = "2024-11-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pinned-together-db"
+database_id = "42c95a91-a343-4f1d-a5b0-5dde1d88aa13"
+
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "pinned-together-photos"
