@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS nudges (
+  username TEXT PRIMARY KEY,
+  sent_at TEXT NOT NULL
+);

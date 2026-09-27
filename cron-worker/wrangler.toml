@@ -1,0 +1,11 @@
+name = "pinned-together-cron"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+[triggers]
+crons = ["0 12 * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pinned-together-db"
+database_id = "42c95a91-a343-4f1d-a5b0-5dde1d88aa13"

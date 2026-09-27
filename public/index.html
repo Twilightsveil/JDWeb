@@ -5,8 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pinned Together</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📌</text></svg>">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#b98a56">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Quicksand:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   :root{
     --cork:#b98a56;
@@ -96,6 +103,291 @@
     background:var(--who-color, var(--rose));display:inline-block;
   }
   .who-chip:hover{filter:brightness(1.05);}
+  .hero-row{display:flex;align-items:center;justify-content:center;gap:.5rem;flex-wrap:wrap;margin-top:.6rem;}
+  .subtle-chip{background:transparent;box-shadow:none;color:var(--ink-soft);}
+  .subtle-chip::before{display:none;}
+
+  .profile-row{display:flex;align-items:center;justify-content:center;gap:.7rem;flex-wrap:wrap;}
+  .profile-chip{
+    font-family:"Quicksand";font-weight:600;font-size:.9rem;
+    background:var(--paper);color:var(--ink);border:1px solid var(--line);
+    border-radius:999px;padding:.3rem .9rem .3rem .3rem;cursor:pointer;
+    display:inline-flex;align-items:center;gap:.5rem;box-shadow:0 2px 6px var(--shadow);
+  }
+  .profile-chip-readonly{cursor:default;}
+  .profile-avatar{
+    width:2.1rem;height:2.1rem;border-radius:50%;overflow:hidden;
+    background:var(--paper-2);display:flex;align-items:center;justify-content:center;
+    font-size:1.1rem;flex-shrink:0;border:2px solid var(--who-color, var(--rose));
+  }
+  .profile-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+  .profile-mood{font-size:1.1rem;line-height:1;}
+
+  .couple-toolbar{display:flex;align-items:center;justify-content:center;gap:.5rem;flex-wrap:wrap;margin-top:1rem;}
+  .thinking-btn-solo{display:block;margin:1rem auto 0;}
+  .more-menu-wrap{position:relative;display:inline-block;}
+  .more-menu{
+    position:absolute;top:calc(100% + .4rem);left:50%;transform:translateX(-50%);
+    background:var(--paper);border:1px solid var(--line);border-radius:12px;
+    box-shadow:0 12px 30px var(--shadow);padding:.4rem;display:flex;flex-direction:column;gap:.15rem;
+    min-width:180px;z-index:40;
+  }
+  .more-menu button{
+    font-family:"Quicksand";font-weight:600;font-size:.85rem;text-align:left;
+    background:transparent;border:none;color:var(--ink);padding:.55rem .7rem;border-radius:8px;cursor:pointer;
+  }
+  .more-menu button:hover{background:var(--paper-2);}
+
+  .big-countdown{
+    max-width:520px;margin:1.5rem auto 2rem;padding:1.5rem 1rem;text-align:center;
+    background:linear-gradient(135deg, var(--rose), var(--rose-deep));border-radius:18px;
+    box-shadow:0 12px 32px var(--shadow);color:#fff;display:flex;flex-direction:column;gap:.2rem;
+  }
+  .big-countdown-label{font-family:"Quicksand";font-weight:700;font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;opacity:.9;}
+  .big-countdown-number{font-family:"Caveat";font-size:4rem;line-height:1;font-weight:700;}
+  .big-countdown-sub{font-size:.9rem;opacity:.9;}
+
+  .couple-stats{display:flex;align-items:center;justify-content:center;gap:.5rem;flex-wrap:wrap;margin-top:.7rem;}
+  .stat-pill{
+    font-family:"Quicksand";font-weight:600;font-size:.82rem;
+    background:var(--paper-2);color:var(--ink);border:1px solid var(--line);
+    border-radius:999px;padding:.35rem .8rem;cursor:pointer;
+  }
+  .stat-pill:hover{filter:brightness(1.06);}
+  .stat-pill-add{background:transparent;border-style:dashed;color:var(--ink-soft);}
+
+  .login-screen{
+    position:fixed;inset:0;background:var(--cork);
+    background-image:inherit;background-size:inherit;
+    display:flex;align-items:center;justify-content:center;padding:1.2rem;z-index:200;
+  }
+  .login-card{
+    background:var(--paper);border-radius:14px;padding:1.6rem;width:min(320px,100%);
+    box-shadow:0 20px 50px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:.7rem;text-align:center;
+  }
+  .login-card h1{font-size:2.4rem;color:var(--rose-deep);}
+  .login-card input{
+    font-family:"Quicksand";font-size:.95rem;padding:.6rem .7rem;border-radius:8px;
+    border:1px solid var(--line);background:var(--paper-2);color:var(--ink);
+  }
+  .login-error{color:var(--rose-deep);font-size:.85rem;margin:0;}
+  .modal-label{display:block;font-size:.8rem;font-weight:700;color:var(--ink-soft);margin-bottom:.3rem;}
+  .avatar-editor{display:flex;flex-direction:column;align-items:center;gap:.6rem;margin-bottom:1rem;}
+  .profile-avatar-big{width:5rem;height:5rem;font-size:2.2rem;border-width:3px;}
+  .mood-row{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem;}
+  .mood-btn{
+    font-size:1.3rem;line-height:1;padding:.4rem;border-radius:8px;border:2px solid transparent;
+    background:var(--paper-2);cursor:pointer;
+  }
+  .mood-btn.selected{border-color:var(--rose-deep);background:var(--paper);}
+  .password-toggle{width:100%;margin-top:.8rem;}
+  .password-form{display:flex;flex-direction:column;gap:.5rem;margin-top:.7rem;}
+  .password-form input{
+    font-family:"Quicksand";font-size:.9rem;padding:.55rem .7rem;border-radius:8px;
+    border:1px solid var(--line);background:var(--paper-2);color:var(--ink);
+  }
+  .password-error{color:var(--rose-deep);font-size:.8rem;margin:0;}
+  .modal-copy{font-size:.85rem;color:var(--ink-soft);line-height:1.4;margin:0 0 .8rem;}
+  .modal-copy.small{font-size:.75rem;margin-top:.8rem;margin-bottom:0;}
+  .modal-copy a{color:var(--sky);}
+  .notify-topic{
+    font-family:monospace;font-size:.95rem;background:var(--paper-2);border:1px solid var(--line);
+    border-radius:8px;padding:.6rem .7rem;margin-bottom:.9rem;text-align:center;word-break:break-all;color:var(--ink);
+  }
+  .modal-wide{width:min(440px,100%);}
+  .activity-list{display:flex;flex-direction:column;gap:.6rem;max-height:50vh;overflow-y:auto;margin-bottom:.9rem;}
+  .activity-row{display:flex;flex-direction:column;gap:.1rem;padding:.5rem .6rem;border-radius:8px;background:var(--paper-2);}
+  .activity-row .activity-message{font-size:.9rem;color:var(--ink);}
+  .activity-row .activity-time{font-size:.75rem;color:var(--ink-soft);}
+
+  .chat-list{display:flex;flex-direction:column;gap:.5rem;max-height:45vh;overflow-y:auto;margin-bottom:.8rem;padding-right:.2rem;}
+  .chat-bubble{max-width:80%;padding:.5rem .7rem;border-radius:12px;font-size:.9rem;position:relative;}
+  .chat-bubble.mine{align-self:flex-end;background:var(--rose);color:#fff;border-bottom-right-radius:2px;}
+  .chat-bubble.theirs{align-self:flex-start;background:var(--paper-2);color:var(--ink);border-bottom-left-radius:2px;}
+  .chat-bubble .chat-meta{display:block;font-size:.7rem;opacity:.75;margin-top:.2rem;}
+  .chat-bubble .mini-x{position:absolute;top:-6px;right:-6px;opacity:0;}
+  .chat-bubble:hover .mini-x{opacity:1;}
+  .chat-form, .song-form{display:flex;gap:.5rem;margin-bottom:.8rem;flex-wrap:wrap;}
+  .typing-indicator{font-size:.8rem;color:var(--ink-soft);font-style:italic;margin:-.3rem 0 .5rem;}
+  #voiceRecordBtn.recording{background:var(--rose);color:#fff;animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+  .chat-bubble audio{max-width:100%;}
+
+  .chat-bubble-btn{
+    position:fixed;bottom:1.2rem;left:1.2rem;width:3.4rem;height:3.4rem;border-radius:50%;
+    background:var(--rose);color:#fff;font-size:1.5rem;border:none;box-shadow:0 8px 20px rgba(0,0,0,.4);
+    cursor:pointer;z-index:80;display:flex;align-items:center;justify-content:center;
+  }
+  .chat-bubble-btn:hover{filter:brightness(1.08);}
+  .chat-panel{
+    position:fixed;bottom:5rem;left:1.2rem;width:min(340px, calc(100vw - 2.4rem));max-height:min(70vh,520px);
+    background:var(--paper);border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.5);
+    display:flex;flex-direction:column;z-index:80;overflow:hidden;
+  }
+  .chat-panel-header{
+    display:flex;align-items:center;justify-content:space-between;padding:.7rem 1rem;
+    background:var(--rose);color:#fff;font-weight:700;font-family:"Quicksand";flex-shrink:0;
+  }
+  .chat-panel-header button{background:transparent;border:none;color:#fff;font-size:1.3rem;line-height:1;cursor:pointer;}
+  .chat-panel .chat-list{flex:1;overflow-y:auto;padding:.8rem;margin:0;max-height:none;}
+  .chat-panel .chat-form{padding:.6rem .8rem;margin:0;border-top:1px solid var(--line);flex-shrink:0;}
+  .chat-panel .typing-indicator{padding:0 .8rem;margin:.3rem 0 0;flex-shrink:0;}
+  .song-form{flex-direction:column;}
+  .chat-form input, .song-form input{
+    flex:1;font-family:"Quicksand";font-size:.9rem;padding:.5rem .7rem;
+    border-radius:8px;border:1px solid var(--line);background:var(--paper-2);color:var(--ink);
+  }
+
+  .idea-list, .song-list{display:flex;flex-direction:column;gap:.5rem;max-height:40vh;overflow-y:auto;margin-bottom:.8rem;}
+  .idea-row{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:8px;background:var(--paper-2);}
+  .idea-row.done .idea-text{text-decoration:line-through;color:var(--ink-soft);}
+  .idea-row .idea-text{flex:1;font-size:.9rem;}
+  .idea-row input[type="checkbox"]{width:1.1rem;height:1.1rem;flex-shrink:0;}
+  .wishlist-tabs{display:flex;gap:.5rem;margin-bottom:.8rem;}
+  .wishlist-tab{
+    flex:1;font-family:"Quicksand";font-weight:700;font-size:.85rem;padding:.5rem;
+    border-radius:8px;border:1px solid var(--line);background:var(--paper-2);color:var(--ink-soft);cursor:pointer;
+  }
+  .wishlist-tab.active{background:var(--rose);color:#fff;border-color:var(--rose-deep);}
+  .idea-row.claimed{opacity:.7;}
+  .idea-row .claim-label{display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--ink-soft);flex-shrink:0;}
+
+  .song-row{padding:.5rem .6rem .6rem;border-radius:8px;background:var(--paper-2);position:relative;}
+  .song-plain-link{color:var(--sky);font-weight:600;word-break:break-all;}
+  .song-row .song-note{font-size:.85rem;color:var(--ink-soft);margin-top:.4rem;}
+  .song-track-title{font-weight:700;font-size:.9rem;color:var(--ink);margin-bottom:.4rem;}
+  .song-row .chat-meta{display:block;font-size:.7rem;color:var(--ink-soft);margin-top:.3rem;}
+  .song-row .mini-x{position:absolute;top:.4rem;right:.4rem;opacity:.75;z-index:2;}
+  .song-row .mini-x:hover{opacity:1;}
+  .song-row .song-share-btn{right:2.2rem;}
+  .song-embed-wrap{border-radius:8px;overflow:hidden;background:var(--ink);}
+  .song-embed-wrap iframe{display:block;width:100%;border:none;}
+  .song-embed-wrap.spotify iframe{height:152px;}
+  .song-embed-wrap.youtube{position:relative;aspect-ratio:16/9;}
+  .song-embed-wrap.youtube iframe{position:absolute;inset:0;height:100%;}
+
+  .poem-form{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem;}
+  .poem-form input, .poem-form textarea{
+    font-family:"Quicksand";font-size:.9rem;padding:.55rem .7rem;border-radius:8px;
+    border:1px solid var(--line);background:var(--paper-2);color:var(--ink);resize:vertical;
+  }
+  .poem-list{display:flex;flex-direction:column;gap:1rem;}
+  .poems-section{margin-top:3rem;}
+  .poems-details .poem-form{margin-top:1rem;margin-bottom:1.2rem;}
+  .poems-details summary{
+    list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;
+    flex-wrap:wrap;gap:.4rem;
+  }
+  .poems-details summary::-webkit-details-marker{display:none;}
+  .poems-details summary h2{font-size:2rem;color:var(--ink);display:flex;align-items:center;gap:.5rem;}
+  .poems-details summary h2::after{content:'▸';font-family:inherit;color:var(--ink-soft);font-size:1.3rem;transition:transform .15s;}
+  .poems-details[open] summary h2::after{transform:rotate(90deg);}
+
+  .capsule-form{display:flex;flex-direction:column;gap:.5rem;margin:1rem 0 1.2rem;max-width:420px;}
+  .capsule-form input, .capsule-form textarea{
+    font-family:"Quicksand";font-size:.9rem;padding:.55rem .7rem;border-radius:8px;
+    border:1px solid var(--line);background:var(--paper-2);color:var(--ink);resize:vertical;
+  }
+  .capsule-list{display:flex;flex-direction:column;gap:.8rem;}
+  .capsule-card{background:var(--paper-2);border-radius:10px;padding:1rem 1.2rem;position:relative;}
+  .capsule-card.locked{background:repeating-linear-gradient(135deg, var(--paper-2), var(--paper-2) 10px, var(--cork-deep) 10px, var(--cork-deep) 11px);opacity:.85;}
+  .capsule-card .capsule-lock{font-size:1.6rem;}
+  .capsule-card .capsule-open-date{font-family:"Quicksand";font-weight:700;color:var(--ink-soft);font-size:.85rem;}
+  .capsule-card .poem-title{margin:.4rem 0 .2rem;}
+  .capsule-card .poem-body{white-space:pre-wrap;}
+  .capsule-card .mini-x{position:absolute;top:.6rem;right:.6rem;opacity:.6;}
+  .capsule-card .mini-x:hover{opacity:1;}
+
+  .milestone-timeline{position:relative;padding-left:1.6rem;}
+  .milestone-timeline::before{content:'';position:absolute;left:.4rem;top:.3rem;bottom:.3rem;width:2px;background:var(--line);}
+  .milestone-item{position:relative;margin-bottom:1.5rem;}
+  .milestone-item::before{
+    content:'';position:absolute;left:-1.6rem;top:.3rem;width:.7rem;height:.7rem;border-radius:50%;
+    background:var(--rose);border:2px solid var(--paper);box-shadow:0 0 0 2px var(--rose-deep);
+  }
+  .milestone-date{font-size:.75rem;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
+  .milestone-title{font-family:"Caveat";font-size:1.6rem;color:var(--rose-deep);margin:.1rem 0 .2rem;}
+  .milestone-note{font-size:.9rem;color:var(--ink);}
+  .milestone-item img{max-width:220px;width:100%;border-radius:8px;margin-top:.5rem;display:block;}
+  .milestone-item .mini-x{position:relative;top:0;right:0;display:inline-block;opacity:.6;margin-left:.5rem;}
+  .milestone-item .mini-x:hover{opacity:1;}
+  .poem-card{background:var(--paper-2);border-radius:10px;padding:1rem 1.2rem;position:relative;}
+  .poem-title{font-family:"Caveat";font-size:1.6rem;color:var(--rose-deep);margin:0 0 .3rem;}
+  .poem-body{font-family:"Caveat";font-size:1.25rem;line-height:1.5;white-space:pre-wrap;color:var(--ink);}
+  .poem-card .chat-meta{display:block;font-size:.7rem;color:var(--ink-soft);margin-top:.6rem;}
+  .poem-card .mini-x{position:absolute;top:.6rem;right:.6rem;opacity:.6;}
+  .poem-card .mini-x:hover{opacity:1;}
+
+  .highlight-stage{
+    aspect-ratio:1/1;max-height:60vh;border-radius:10px;overflow:hidden;background:var(--paper-2);
+    display:flex;align-items:center;justify-content:center;position:relative;
+  }
+  .highlight-stage img{width:100%;height:100%;object-fit:contain;}
+  .highlight-caption{
+    position:absolute;bottom:0;left:0;right:0;padding:.8rem 1rem;
+    background:linear-gradient(transparent, rgba(0,0,0,.65));color:#fff;font-size:.85rem;
+  }
+  .highlight-controls{justify-content:center;gap:1rem;margin-top:.9rem;}
+  .highlight-counter{font-size:.85rem;color:var(--ink-soft);}
+
+  .memory-stage{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:.5rem;
+    max-height:55vh;overflow-y:auto;padding:.6rem;background:var(--paper-2);border-radius:10px;margin-bottom:.8rem;
+  }
+  .memory-thumb{
+    aspect-ratio:1;border-radius:6px;overflow:hidden;background:var(--paper);
+    opacity:0;transform:scale(.5) rotate(var(--r,0deg));
+    transition:opacity .4s ease, transform .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  .memory-thumb.revealed{opacity:1;transform:scale(1) rotate(var(--r,0deg));}
+  .memory-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  @media (prefers-reduced-motion: reduce){
+    .memory-thumb{transition:opacity .2s linear;transform:none!important;}
+  }
+  .story-preview-img{width:100%;max-height:55vh;object-fit:contain;border-radius:10px;margin-bottom:.8rem;background:var(--paper-2);}
+  .story-theme-row{display:flex;gap:.5rem;justify-content:center;margin-bottom:.8rem;}
+  .story-theme-swatch{
+    width:2rem;height:2rem;border-radius:50%;border:2px solid transparent;cursor:pointer;
+    background:var(--sw);padding:0;
+  }
+  .story-theme-swatch.selected{border-color:var(--ink);box-shadow:0 0 0 2px var(--paper);}
+  #storyCaptionInput{
+    width:100%;font-family:"Quicksand";font-size:.9rem;padding:.55rem .7rem;border-radius:8px;
+    border:1px solid var(--line);background:var(--paper-2);color:var(--ink);margin-bottom:.9rem;
+  }
+  .share-icon-btn{background:transparent;border:none;cursor:pointer;font-size:1rem;color:var(--ink-soft);padding:.2rem .3rem;}
+  .share-icon-btn:hover{color:var(--ink);}
+
+  .calendar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;}
+  .calendar-header h3{font-size:1.6rem;}
+  .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.3rem;margin-bottom:.9rem;}
+  .cal-dow{text-align:center;font-size:.7rem;font-weight:700;color:var(--ink-soft);text-transform:uppercase;padding-bottom:.2rem;}
+  .cal-day{
+    aspect-ratio:1;border-radius:6px;background:var(--paper-2);cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.1rem;
+    font-size:.8rem;color:var(--ink);position:relative;border:2px solid transparent;
+  }
+  .cal-day.empty{background:transparent;cursor:default;}
+  .cal-day.has-pins{background:var(--rose);color:#fff;}
+  .cal-day.marker{border-color:var(--sky);}
+  .cal-day.today{font-weight:700;border-color:var(--ink);}
+  .cal-day .cal-dot{font-size:.6rem;position:absolute;bottom:2px;}
+  .calendar-day-detail{background:var(--paper-2);border-radius:10px;padding:.8rem;margin-bottom:.9rem;max-height:35vh;overflow-y:auto;}
+  .calendar-day-detail .board-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));}
+  .calendar-day-map{height:180px;border-radius:8px;margin-top:.6rem;overflow:hidden;}
+
+  .location-picker-map{height:280px;border-radius:10px;overflow:hidden;margin-bottom:1rem;}
+  .full-map{height:min(60vh,480px);border-radius:10px;overflow:hidden;margin-bottom:.6rem;}
+  .modal input[type="date"]{
+    width:100%;font-family:"Quicksand";font-size:.9rem;padding:.5rem .6rem;
+    border-radius:8px;border:1px solid var(--line);background:var(--paper-2);color:var(--ink);margin-bottom:.9rem;
+  }
+
+  .otd-section{
+    max-width:280px;margin:0 auto 2rem;display:flex;flex-direction:column;gap:.5rem;align-items:center;
+  }
+  .react-btn{background:transparent;border:none;cursor:pointer;font-size:.85rem;color:var(--ink-soft);padding:0 .2rem;}
+  .react-btn.reacted{color:var(--rose-deep);}
 
   .banner{
     max-width:640px;margin:0 auto 1.5rem;padding:.7rem 1rem;border-radius:10px;
@@ -176,6 +468,9 @@
     position:absolute;font-size:1.9rem;line-height:1;cursor:grab;user-select:none;
     touch-action:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));
   }
+  .sticker.dragging, .stickynote.dragging{
+    filter:drop-shadow(0 10px 16px rgba(0,0,0,.5));cursor:grabbing;z-index:20;
+  }
   .stickynote{
     position:absolute;width:86px;min-height:58px;padding:.35rem .45rem;
     font-family:"Caveat";font-size:1.05rem;line-height:1.15;color:#3a2c22;
@@ -210,6 +505,45 @@
     font-size:.9rem;cursor:pointer;color:var(--ink-soft);
   }
 
+  .expand-btn{
+    position:absolute;top:.4rem;right:.4rem;width:26px;height:26px;border-radius:50%;
+    background:rgba(0,0,0,.45);color:#fff;border:none;font-size:.85rem;line-height:1;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    opacity:.55;transition:opacity .15s;z-index:3;
+  }
+  .photo-wrap:hover .expand-btn, .expand-btn:focus-visible{opacity:1;}
+  .photo-wrap img{cursor:zoom-in;}
+
+  .lightbox-backdrop{
+    position:fixed;inset:0;background:rgba(10,7,4,.85);
+    display:flex;align-items:center;justify-content:center;
+    padding:1.2rem;z-index:100;
+  }
+  .lightbox-frame{
+    position:relative;max-width:min(92vw,720px);max-height:92vh;
+    display:flex;flex-direction:column;align-items:center;gap:.7rem;
+    overflow-y:auto;padding:.5rem;
+  }
+  .lightbox-editable{
+    position:relative;background:var(--paper);border-radius:10px;padding:.7rem;
+    box-shadow:0 20px 60px rgba(0,0,0,.6);max-width:100%;
+  }
+  .lightbox-photo{
+    position:relative;max-width:100%;max-height:60vh;
+    border-radius:6px;overflow:hidden;background:var(--paper-2);line-height:0;
+  }
+  .lightbox-photo img{max-width:100%;max-height:60vh;display:block;object-fit:contain;}
+  .lightbox-photo .overlay-layer > .sticker{font-size:2.6rem;}
+  .lightbox-photo .overlay-layer > .stickynote{width:150px;min-height:96px;font-size:1.4rem;padding:.6rem .7rem;}
+  .lightbox-tools{display:flex;flex-direction:column;gap:.5rem;margin-top:.6rem;}
+  .lightbox-actions{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;}
+  .lightbox-close{
+    position:absolute;top:-16px;right:-16px;width:36px;height:36px;border-radius:50%;
+    background:var(--paper);color:var(--ink);border:none;font-size:1.3rem;cursor:pointer;
+    box-shadow:0 4px 12px rgba(0,0,0,.4);z-index:2;
+  }
+  .lightbox-note{color:#f0e4cc;font-size:.8rem;text-align:center;max-width:90%;}
+
   .add-card{
     aspect-ratio:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:.3rem;min-height:100%;border:2px dashed var(--line);background:var(--paper-2);
@@ -221,22 +555,53 @@
 
   .archive-section{margin-top:3rem;}
 
-  .drive-section{margin-top:3rem;}
+  .drive-section{margin-top:3rem;position:relative;}
   .drive-hint{color:var(--ink-soft);font-size:.85rem;margin:-.5rem 0 1rem;}
+  .search-input{
+    width:100%;font-family:"Quicksand";font-size:.9rem;padding:.55rem .8rem;
+    border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);
+    margin-bottom:1.2rem;
+  }
+  .drive-drop-hint{
+    display:none;position:absolute;inset:-.6rem;border-radius:16px;z-index:10;
+    border:3px dashed var(--rose);background:rgba(213,103,90,.14);
+    align-items:center;justify-content:center;text-align:center;
+    font-family:"Caveat";font-size:1.9rem;color:var(--rose-deep);pointer-events:none;
+  }
+  .drive-section.drag-over .drive-drop-hint{display:flex;}
   #driveList{display:flex;flex-direction:column;gap:1.5rem;}
   .drive-current{display:flex;flex-direction:column;gap:.75rem;}
   .drive-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1.1rem;}
   .drive-month-label{font-size:.85rem;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
   .drive-item{
     background:var(--paper);border-radius:10px;padding:.7rem;box-shadow:0 4px 12px var(--shadow);
-    display:flex;flex-direction:column;gap:.5rem;
+    display:flex;flex-direction:column;gap:.5rem;position:relative;
+  }
+  .bulk-check{position:absolute;top:.5rem;left:.5rem;z-index:3;width:1.2rem;height:1.2rem;display:none;}
+  .drive-section.bulk-mode .bulk-check, .archive-section.bulk-mode .bulk-check{display:block;}
+  .section-head-actions{display:flex;gap:.5rem;}
+  .bulk-bar{
+    display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;padding:.6rem .8rem;
+    background:var(--paper-2);border-radius:10px;margin-bottom:1rem;font-size:.85rem;
   }
   .drive-thumb{
     aspect-ratio:4/3;border-radius:6px;overflow:hidden;background:var(--paper-2);
     display:flex;align-items:center;justify-content:center;font-size:2.2rem;
   }
   .drive-thumb img, .drive-thumb video{width:100%;height:100%;object-fit:cover;display:block;}
+  .video-placeholder{
+    width:100%;height:100%;border:none;cursor:pointer;
+    background:linear-gradient(135deg, var(--cork-deep), var(--ink));
+    display:flex;align-items:center;justify-content:center;
+  }
+  .video-play-icon{
+    width:2.6rem;height:2.6rem;border-radius:50%;background:rgba(255,255,255,.9);
+    color:var(--ink);display:flex;align-items:center;justify-content:center;
+    font-size:1rem;padding-left:.2rem;box-shadow:0 2px 8px rgba(0,0,0,.4);
+  }
+  .video-placeholder:hover .video-play-icon{background:#fff;}
   .drive-meta{font-size:.8rem;color:var(--ink-soft);display:flex;justify-content:space-between;gap:.4rem;}
+  .drive-author{font-weight:700;}
   .drive-name{font-weight:600;color:var(--ink);font-size:.85rem;word-break:break-word;}
   .drive-actions{display:flex;justify-content:space-between;gap:.4rem;}
   .drive-actions a{color:var(--sky);font-weight:600;font-size:.8rem;text-decoration:none;}
@@ -259,7 +624,7 @@
 
   .modal-backdrop{
     position:fixed;inset:0;background:rgba(20,14,8,.55);display:flex;
-    align-items:center;justify-content:center;padding:1rem;z-index:50;
+    align-items:center;justify-content:center;padding:1rem;z-index:150;
   }
   .modal{
     background:var(--paper);border-radius:14px;padding:1.3rem;width:min(360px,100%);
@@ -279,10 +644,29 @@
     background:var(--ink);color:var(--paper);padding:.6rem 1.1rem;border-radius:999px;
     font-size:.85rem;box-shadow:0 8px 20px rgba(0,0,0,.4);z-index:60;
   }
+  .undo-toast{display:flex;align-items:center;gap:.7rem;}
+  .undo-toast .tool-btn{background:transparent;color:var(--sky);padding:0;font-weight:700;}
 
   .foot{text-align:center;color:var(--ink-soft);font-size:.85rem;margin-top:3rem;}
+  .foot p{margin:.5rem 0 0;}
+  .export-link{color:var(--sky);font-weight:600;text-decoration:none;}
+  .export-link:hover{text-decoration:underline;}
 
   [hidden]{display:none!important;}
+
+  .ambient-overlay{
+    position:fixed;inset:0;pointer-events:none;z-index:1;
+    mix-blend-mode:soft-light;opacity:0;transition:opacity 3s ease, background 3s ease;
+  }
+  .ambient-overlay.ambient-bright{
+    opacity:1;background:radial-gradient(ellipse at 30% 5%, rgba(255,205,120,.55), transparent 65%);
+  }
+  .ambient-overlay.ambient-quiet{
+    opacity:.85;background:radial-gradient(ellipse at 30% 5%, rgba(70,95,135,.4), transparent 65%);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ambient-overlay{transition:none;}
+  }
 
   @media (prefers-reduced-motion: reduce){
     .card, .archive-month summary::after{transition:none;}
@@ -291,20 +675,88 @@
 </head>
 <body>
 
-<div class="app">
+<div class="login-screen" id="loginScreen" hidden>
+  <form class="login-card" id="loginForm">
+    <h1>Pinned Together</h1>
+    <p class="tagline">sign in to see our board</p>
+    <input type="text" id="loginUsername" placeholder="Username" autocomplete="username" required>
+    <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required>
+    <button type="submit" class="tool-btn primary">Sign in</button>
+    <p class="login-error" id="loginError" hidden></p>
+  </form>
+</div>
+
+<div class="login-screen" id="setupScreen" hidden>
+  <form class="login-card" id="setupForm">
+    <h1>Welcome 💌</h1>
+    <p class="tagline">pick your own username and password to finish setting up your account</p>
+    <input type="text" id="setupUsername" placeholder="Choose a username" autocomplete="username" required>
+    <input type="password" id="setupPassword" placeholder="New password" autocomplete="new-password" required>
+    <input type="password" id="setupPasswordConfirm" placeholder="Confirm password" autocomplete="new-password" required>
+    <button type="submit" class="tool-btn primary">Save &amp; continue</button>
+    <p class="login-error" id="setupError" hidden></p>
+  </form>
+</div>
+
+<div class="ambient-overlay" id="ambientOverlay"></div>
+<div class="app" id="appRoot" hidden>
   <header class="hero">
     <h1>Pinned Together</h1>
     <p class="tagline">a corkboard for two — doodle today, pin your memories, watch the months stack up</p>
-    <button id="whoBtn" class="who-chip" type="button">👤 <span id="whoName">set your name</span></button>
+
+    <div class="profile-row">
+      <button id="whoBtn" class="profile-chip" type="button">
+        <span class="profile-avatar" id="myAvatar">👤</span>
+        <span id="whoName">…</span>
+      </button>
+      <button id="wishlistBtn" class="who-chip subtle-chip" type="button">🎁 My Wishlist</button>
+      <button id="partnerChip" class="profile-chip profile-chip-readonly" type="button" hidden>
+        <span class="profile-avatar" id="partnerAvatar">👤</span>
+        <span id="partnerName">…</span>
+        <span class="profile-mood" id="partnerMood"></span>
+      </button>
+    </div>
+
+    <div class="hero-row">
+      <button id="themeToggleBtn" class="who-chip subtle-chip" type="button" aria-label="Toggle light/dark theme">🌙</button>
+      <button id="activityBtn" class="who-chip subtle-chip" type="button">🕘 Activity</button>
+      <button id="notifyBtn" class="who-chip subtle-chip" type="button">🔔 Notifications</button>
+      <button id="logoutBtn" class="who-chip subtle-chip" type="button">Log out</button>
+    </div>
+    <div class="couple-stats" id="coupleStats">
+      <button type="button" class="stat-pill" id="togetherPill" hidden></button>
+      <button type="button" class="share-icon-btn" id="shareTogetherBtn" hidden title="Share to Story">📤</button>
+      <button type="button" class="stat-pill" id="nextDatePill" hidden></button>
+      <button type="button" class="stat-pill" id="ideasBtn">💡 Date Ideas</button>
+      <button type="button" class="stat-pill stat-pill-add" id="setDatesBtn" hidden>✏️ Set our dates</button>
+    </div>
+    <div class="couple-stats" id="eventPills"></div>
+    <button type="button" class="stat-pill stat-pill-add" id="manageEventsBtn">🎉 Upcoming Events</button>
+
+    <button id="thinkingBtn" class="tool-btn primary thinking-btn-solo" type="button">💌 Thinking of You</button>
   </header>
 
+  <section class="big-countdown" id="bigCountdown" hidden>
+    <span class="big-countdown-label" id="bigCountdownLabel"></span>
+    <span class="big-countdown-number" id="bigCountdownNumber"></span>
+    <span class="big-countdown-sub" id="bigCountdownSub"></span>
+    <button type="button" id="shareBigCountdownBtn" class="tool-btn" style="margin-top:.8rem;">📤 Share to Story</button>
+  </section>
+
   <div id="syncBanner" class="banner" hidden></div>
+
+  <section class="otd-section" id="otdSection" hidden>
+    <span class="drive-month-label">📸 On this day</span>
+    <div id="otdCard"></div>
+    <button type="button" id="shareOtdBtn" class="tool-btn">📤 Share to Story</button>
+  </section>
 
   <section class="doodle-strip" aria-label="Today's doodle">
     <div class="tape tape-left"></div>
     <div class="tape tape-right"></div>
     <div class="doodle-head">
       <h2>Today's Doodle</h2>
+      <button type="button" id="songsBtn" class="tool-btn subtle">🎵 Song of the Day</button>
       <span class="doodle-date" id="doodleDate"></span>
     </div>
     <canvas id="doodleCanvas" class="doodle-canvas" aria-label="Shared drawing area, resets every day"></canvas>
@@ -321,7 +773,12 @@
   <section class="board-section">
     <div class="section-head">
       <h2 id="monthHeading">This Month</h2>
-      <span class="count" id="monthCount"></span>
+      <div class="section-head-actions">
+        <span class="count" id="monthCount"></span>
+        <button type="button" id="calendarBtn" class="tool-btn subtle" title="Calendar view">📅</button>
+        <button type="button" id="highlightsBtn" class="tool-btn subtle" title="Highlight reel">🎬</button>
+        <button type="button" id="memoryMovieBtn" class="tool-btn subtle" title="Memory movie">🎞️</button>
+      </div>
     </div>
     <div class="board-grid" id="boardGrid">
       <button class="card add-card" id="addPhotoBtn" type="button">
@@ -331,24 +788,96 @@
     </div>
   </section>
 
-  <section class="archive-section">
+  <section class="archive-section" id="archiveSection">
     <div class="section-head">
       <h2>Archive</h2>
-      <span class="count">collected at the end of each month</span>
+      <div class="section-head-actions">
+        <span class="count">collected at the end of each month</span>
+        <button id="archiveSelectBtn" class="tool-btn" type="button">Select</button>
+      </div>
+    </div>
+    <input type="search" id="archiveSearch" class="search-input" placeholder="🔎 Search past photos, people, or notes…">
+    <div class="bulk-bar" id="archiveBulkBar" hidden>
+      <span id="archiveBulkCount">0 selected</span>
+      <button type="button" id="archiveBulkDelete" class="tool-btn danger">🗑 Delete</button>
+      <button type="button" id="archiveBulkCancel" class="tool-btn subtle">Cancel</button>
     </div>
     <div id="archiveList" class="archive-list"><p class="empty-note">Nothing archived yet — this month's pins move here once the calendar turns.</p></div>
   </section>
 
-  <section class="drive-section">
-    <div class="section-head">
-      <h2>☁️ Our Drive</h2>
-      <button id="driveUploadBtn" class="tool-btn primary" type="button">Upload files</button>
-    </div>
-    <p class="drive-hint">Backed by our own Nextcloud — full-size photos, videos, anything else.</p>
-    <div id="driveList"><p class="empty-note">Loading…</p></div>
+  <section class="poems-section">
+    <details class="poems-details" open>
+      <summary>
+        <h2>📜 Poems</h2>
+        <span class="count" id="poemCount"></span>
+      </summary>
+      <form id="poemForm" class="poem-form" hidden>
+        <input type="text" id="poemTitleInput" maxlength="120" placeholder="Title (optional)" autocomplete="off">
+        <textarea id="poemBodyInput" rows="5" placeholder="Write your poem…"></textarea>
+        <button type="submit" class="tool-btn primary">Post poem</button>
+      </form>
+      <div class="poem-list" id="poemList">Loading…</div>
+    </details>
   </section>
 
-  <footer class="foot">made with 📌 for us</footer>
+  <section class="poems-section">
+    <details class="poems-details" open>
+      <summary>
+        <h2>🔒 Time Capsules</h2>
+        <span class="count" id="capsuleCount"></span>
+      </summary>
+      <form id="capsuleForm" class="capsule-form">
+        <input type="text" id="capsuleTitleInput" maxlength="120" placeholder="Title (optional)" autocomplete="off">
+        <textarea id="capsuleBodyInput" rows="4" placeholder="Write a letter for the future…"></textarea>
+        <label class="modal-label" for="capsuleDateInput">Opens on</label>
+        <input type="date" id="capsuleDateInput">
+        <button type="submit" class="tool-btn primary">Seal it</button>
+      </form>
+      <div class="capsule-list" id="capsuleList">Loading…</div>
+    </details>
+  </section>
+
+  <section class="poems-section">
+    <details class="poems-details" open>
+      <summary>
+        <h2>🏳️ Our Story</h2>
+        <span class="count" id="milestoneCount"></span>
+      </summary>
+      <form id="milestoneForm" class="capsule-form">
+        <input type="text" id="milestoneTitleInput" maxlength="120" placeholder="What happened?" autocomplete="off">
+        <input type="date" id="milestoneDateInput">
+        <textarea id="milestoneNoteInput" rows="2" placeholder="A little note (optional)"></textarea>
+        <input type="file" id="milestoneImageInput" accept="image/*">
+        <button type="submit" class="tool-btn primary">Add to our story</button>
+      </form>
+      <div class="milestone-timeline" id="milestoneTimeline">Loading…</div>
+    </details>
+  </section>
+
+  <section class="drive-section" id="driveSection">
+    <div class="section-head">
+      <h2>☁️ Our Drive</h2>
+      <div class="section-head-actions">
+        <button id="driveSelectBtn" class="tool-btn" type="button">Select</button>
+        <button id="driveUploadBtn" class="tool-btn primary" type="button">Upload files</button>
+      </div>
+    </div>
+    <p class="drive-hint">Backed by our own Nextcloud — full-size photos, videos, anything else. Drag files here to upload. For bulk backups, use the <a href="https://nextcloud.enganostudios.com" target="_blank" rel="noopener">Nextcloud app</a> directly — it's built for that.</p>
+    <input type="search" id="driveSearch" class="search-input" placeholder="🔎 Search files or people…">
+    <div class="bulk-bar" id="driveBulkBar" hidden>
+      <span id="driveBulkCount">0 selected</span>
+      <button type="button" id="driveBulkDownload" class="tool-btn">⬇ Download</button>
+      <button type="button" id="driveBulkDelete" class="tool-btn danger">🗑 Delete</button>
+      <button type="button" id="driveBulkCancel" class="tool-btn subtle">Cancel</button>
+    </div>
+    <div id="driveList"><p class="empty-note">Loading…</p></div>
+    <div class="drive-drop-hint">Drop to upload to our Drive</div>
+  </section>
+
+  <footer class="foot">
+    <a href="/api/export" class="export-link">⬇ Export our pins as a zip</a>
+    <p>made with 📌 for us</p>
+  </footer>
 </div>
 
 <input type="file" id="uploadInput" accept="image/*" hidden>
@@ -356,11 +885,236 @@
 
 <div class="modal-backdrop" id="nameModal" hidden>
   <div class="modal">
-    <h3>Who is pinning?</h3>
-    <input type="text" id="nameInput" maxlength="24" placeholder="Your name">
+    <h3>Your profile</h3>
+    <div class="avatar-editor">
+      <span class="profile-avatar profile-avatar-big" id="editAvatarPreview">👤</span>
+      <button id="avatarUploadBtn" class="tool-btn" type="button">Change photo</button>
+    </div>
+    <input type="text" id="nameInput" maxlength="24" placeholder="What should we call you?">
     <div class="swatch-row" id="nameColors"></div>
+    <label class="modal-label">Mood right now</label>
+    <div class="mood-row" id="moodRow"></div>
     <div class="modal-actions">
-      <button id="nameSubmit" class="tool-btn primary" type="button">Let's go</button>
+      <button id="nameSubmit" class="tool-btn primary" type="button">Save</button>
+    </div>
+    <button type="button" id="showPasswordFormBtn" class="tool-btn subtle password-toggle">Change password</button>
+    <form id="passwordForm" class="password-form" hidden>
+      <input type="password" id="currentPasswordInput" placeholder="Current password" autocomplete="current-password">
+      <input type="password" id="newPasswordInput" placeholder="New password" autocomplete="new-password">
+      <button type="submit" class="tool-btn primary">Update password</button>
+      <p class="password-error" id="passwordError" hidden></p>
+    </form>
+  </div>
+</div>
+<input type="file" id="avatarInput" accept="image/*" hidden>
+
+<div class="modal-backdrop" id="datesModal" hidden>
+  <div class="modal">
+    <h3>Our dates</h3>
+    <label class="modal-label" for="togetherSinceInput">Together since</label>
+    <input type="date" id="togetherSinceInput">
+    <label class="modal-label" for="nextDateInput">Next date night</label>
+    <input type="date" id="nextDateInput">
+    <label class="modal-label" for="bigEventLabelInput">Big countdown (optional — a wedding, a big trip)</label>
+    <input type="text" id="bigEventLabelInput" maxlength="40" placeholder="e.g. Our Wedding">
+    <input type="date" id="bigEventDateInput">
+    <div class="modal-actions">
+      <button id="datesCancel" class="tool-btn subtle" type="button">Cancel</button>
+      <button id="datesSubmit" class="tool-btn primary" type="button">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="eventsModal" hidden>
+  <div class="modal modal-wide">
+    <h3>🎉 Upcoming Events</h3>
+    <form id="eventForm" class="chat-form">
+      <input type="text" id="eventLabelInput" maxlength="60" placeholder="Birthday, trip, anniversary…" autocomplete="off">
+      <input type="date" id="eventDateInput">
+      <button type="submit" class="tool-btn primary">Add</button>
+    </form>
+    <div class="idea-list" id="eventList">Loading…</div>
+    <div class="modal-actions">
+      <button id="eventsClose" class="tool-btn subtle" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="notifyModal" hidden>
+  <div class="modal">
+    <h3>Get notified</h3>
+    <p class="modal-copy">Install the free <strong>ntfy</strong> app (iOS/Android), then add this as a subscription to get notified whenever the other person pins a photo, doodles a note, or adds something to the drive.</p>
+    <div class="notify-topic" id="notifyTopic">loading…</div>
+    <div class="modal-actions">
+      <button id="notifyCopy" class="tool-btn" type="button">Copy topic</button>
+      <a id="notifyOpenApp" class="tool-btn primary" href="#" target="_blank" rel="noopener">Open in ntfy</a>
+    </div>
+    <p class="modal-copy small">Get the app first: <a href="https://ntfy.sh/" target="_blank" rel="noopener">ntfy.sh</a> (App Store / Play Store / F-Droid).</p>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="activityModal" hidden>
+  <div class="modal modal-wide">
+    <h3>🕘 Activity</h3>
+    <div class="activity-list" id="activityList">Loading…</div>
+    <div class="modal-actions">
+      <button id="activityClose" class="tool-btn subtle" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<button id="chatBubble" class="chat-bubble-btn" type="button" aria-label="Open Love Notes">💬</button>
+<div class="chat-panel" id="chatPanel" hidden>
+  <div class="chat-panel-header">
+    <span>💬 Love Notes</span>
+    <button type="button" id="chatPanelClose" aria-label="Close">×</button>
+  </div>
+  <div class="chat-list" id="chatList">Loading…</div>
+  <p class="typing-indicator" id="typingIndicator" hidden>typing…</p>
+  <form id="chatForm" class="chat-form">
+    <input type="text" id="chatInput" maxlength="500" placeholder="Write something sweet…" autocomplete="off">
+    <button type="button" id="voiceRecordBtn" class="tool-btn" title="Record a voice note">🎤</button>
+    <button type="submit" class="tool-btn primary">Send</button>
+  </form>
+</div>
+
+<div class="modal-backdrop" id="ideasModal" hidden>
+  <div class="modal modal-wide">
+    <h3>💡 Date Ideas</h3>
+    <form id="ideaForm" class="chat-form">
+      <input type="text" id="ideaInput" maxlength="200" placeholder="Add an idea…" autocomplete="off">
+      <button type="submit" class="tool-btn primary">Add</button>
+    </form>
+    <div class="idea-list" id="ideaList">Loading…</div>
+    <div class="modal-actions">
+      <button id="ideasClose" class="tool-btn subtle" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="songsModal" hidden>
+  <div class="modal modal-wide">
+    <h3>🎵 Song of the Day</h3>
+    <form id="songForm" class="song-form">
+      <input type="url" id="songUrlInput" placeholder="Paste a Spotify/YouTube link…" autocomplete="off">
+      <input type="text" id="songNoteInput" maxlength="200" placeholder="Why this one? (optional)" autocomplete="off">
+      <button type="submit" class="tool-btn primary">Share</button>
+    </form>
+    <div class="song-list" id="songList">Loading…</div>
+    <div class="modal-actions">
+      <button id="songsClose" class="tool-btn subtle" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-backdrop" id="wishlistModal" hidden>
+  <div class="modal modal-wide">
+    <h3>🎁 Wishlists</h3>
+    <div class="wishlist-tabs">
+      <button type="button" class="wishlist-tab active" data-wishlist-tab="mine">My Wishlist</button>
+      <button type="button" class="wishlist-tab" data-wishlist-tab="partner">Their Wishlist</button>
+    </div>
+    <div id="myWishlistPane">
+      <p class="modal-copy">Your partner can see this to know what to get you — but not whether they've already picked something, so it stays a surprise.</p>
+      <form id="wishlistForm" class="chat-form">
+        <input type="text" id="wishlistInput" maxlength="200" placeholder="Add something you'd love…" autocomplete="off">
+        <button type="submit" class="tool-btn primary">Add</button>
+      </form>
+      <div class="idea-list" id="wishlistList">Loading…</div>
+    </div>
+    <div id="partnerWishlistPane" hidden>
+      <p class="modal-copy">Tick "I'll get this" to remember what you've picked — they won't see it.</p>
+      <div class="idea-list" id="partnerWishlistList">Loading…</div>
+    </div>
+    <div class="modal-actions">
+      <button id="wishlistClose" class="tool-btn subtle" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="highlightsModal" hidden>
+  <div class="modal">
+    <h3>🎬 Highlights</h3>
+    <div class="highlight-stage" id="highlightStage"></div>
+    <div class="modal-actions highlight-controls">
+      <button type="button" id="highlightPrev" class="tool-btn">‹ Prev</button>
+      <span id="highlightCounter" class="highlight-counter"></span>
+      <button type="button" id="highlightNext" class="tool-btn">Next ›</button>
+    </div>
+    <div class="modal-actions">
+      <button type="button" id="shareCollageBtn" class="tool-btn">📤 Share collage</button>
+      <button id="highlightsClose" class="tool-btn subtle" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="memoryMovieModal" hidden>
+  <div class="modal modal-wide">
+    <h3>🎞️ Memory Movie</h3>
+    <p class="modal-copy">Watch your board fill up from day one.</p>
+    <div class="memory-stage" id="memoryStage"></div>
+    <div class="modal-actions highlight-controls">
+      <button type="button" id="memoryPlayBtn" class="tool-btn primary">▶ Play</button>
+      <button type="button" id="memoryRestartBtn" class="tool-btn">⟲ Restart</button>
+    </div>
+    <div class="modal-actions">
+      <button id="memoryMovieClose" class="tool-btn subtle" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="storyPreviewModal" hidden>
+  <div class="modal">
+    <h3>📱 Share to Story</h3>
+    <img id="storyPreviewImg" class="story-preview-img" alt="Story preview">
+    <div class="story-theme-row" id="storyThemeRow"></div>
+    <input type="text" id="storyCaptionInput" maxlength="80" placeholder="Custom caption (optional)">
+    <div class="modal-actions">
+      <button id="storyDownloadBtn" class="tool-btn primary" type="button">⬇ Download</button>
+      <button id="storyShareBtn" class="tool-btn" type="button" hidden>📤 Share</button>
+    </div>
+    <div class="modal-actions">
+      <button id="storyPreviewClose" class="tool-btn subtle" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="calendarModal" hidden>
+  <div class="modal modal-wide">
+    <div class="calendar-header">
+      <button type="button" id="calPrevMonth" class="tool-btn subtle">‹</button>
+      <h3 id="calMonthLabel"></h3>
+      <button type="button" id="calNextMonth" class="tool-btn subtle">›</button>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+    <div class="calendar-day-detail" id="calendarDayDetail" hidden></div>
+    <div class="modal-actions">
+      <button id="viewFullMapBtn" class="tool-btn" type="button">🗺️ View our map</button>
+      <button id="calendarClose" class="tool-btn subtle" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="fullMapModal" hidden>
+  <div class="modal modal-wide">
+    <h3>🗺️ Our Map</h3>
+    <div id="fullMapContainer" class="full-map"></div>
+    <p class="modal-copy small" id="fullMapEmptyNote" hidden>No pins have a location yet — open a pin fullscreen and tap "📍 Location" to add one.</p>
+    <div class="modal-actions">
+      <button id="fullMapClose" class="tool-btn subtle" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="locationModal" hidden>
+  <div class="modal">
+    <h3>📍 Set location</h3>
+    <p class="modal-copy">Click the map where this memory happened.</p>
+    <div id="locationPickerMap" class="location-picker-map"></div>
+    <div class="modal-actions">
+      <button id="locationClear" class="tool-btn subtle" type="button">Remove location</button>
+      <button id="locationSave" class="tool-btn primary" type="button" disabled>Save</button>
     </div>
   </div>
 </div>
@@ -378,12 +1132,65 @@
 </div>
 
 <div id="uploadingToast" class="toast" hidden>Pinning your photo…</div>
+<div id="undoToast" class="toast undo-toast" hidden>
+  <span id="undoToastText"></span>
+  <button type="button" id="undoToastBtn" class="tool-btn subtle">Undo</button>
+</div>
+
+<div class="lightbox-backdrop" id="lightbox" hidden>
+  <div class="lightbox-frame">
+    <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Close">×</button>
+    <div class="lightbox-editable" id="lightboxEditable">
+      <div class="lightbox-photo" id="lightboxPhoto"></div>
+      <div class="lightbox-tools">
+        <div class="stickers-row" id="lightboxStickerChips"></div>
+        <div class="tools-actions">
+          <span id="lightboxReactSlot"></span>
+          <button type="button" class="tool-btn" data-add-note-btn>✏️ Note</button>
+          <button type="button" class="tool-btn" data-set-location>📍 Location</button>
+          <button type="button" class="tool-btn danger" data-delete-btn>🗑 Remove photo</button>
+        </div>
+      </div>
+    </div>
+    <div class="lightbox-actions">
+      <button type="button" class="tool-btn primary" id="lightboxDownload">⬇ Download</button>
+      <button type="button" class="tool-btn" id="lightboxStoryBtn">📱 Story</button>
+    </div>
+    <p class="lightbox-note" id="lightboxNote" hidden></p>
+  </div>
+</div>
 
 <script>
 (function(){
   'use strict';
 
-  var NAME_KEY = 'pt_name', COLOR_KEY = 'pt_color';
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('/sw.js').catch(function(err){ console.warn('SW registration failed', err); });
+    });
+  }
+
+  // ---------- manual theme toggle ----------
+  (function(){
+    var THEME_KEY = 'pt_theme';
+    var saved = null;
+    try{ saved = localStorage.getItem(THEME_KEY); }catch(e){}
+    if(saved === 'light' || saved === 'dark'){
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+  })();
+  function currentTheme(){
+    var attr = document.documentElement.getAttribute('data-theme');
+    if(attr === 'light' || attr === 'dark') return attr;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  function applyTheme(theme){
+    document.documentElement.setAttribute('data-theme', theme);
+    try{ localStorage.setItem('pt_theme', theme); }catch(e){}
+    var btn = document.getElementById('themeToggleBtn');
+    if(btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+  }
+
   var PALETTE = [
     {key:'ink', hex:'#3a2c22', label:'Ink'},
     {key:'rose', hex:'#c9584a', label:'Rose'},
@@ -431,22 +1238,156 @@
     clearTimeout(bannerTimer);
     bannerTimer = setTimeout(function(){ banner.hidden = true; }, 5000);
   }
+  var undoTimer = null;
+  var undoCancelled = false;
+  function showUndoToast(message, delayMs, onCommit, onUndo){
+    clearTimeout(undoTimer);
+    undoCancelled = false;
+    var toast = document.getElementById('undoToast');
+    document.getElementById('undoToastText').textContent = message;
+    toast.hidden = false;
+    var undoBtn = document.getElementById('undoToastBtn');
+    var handler = function(){
+      undoCancelled = true;
+      clearTimeout(undoTimer);
+      toast.hidden = true;
+      undoBtn.removeEventListener('click', handler);
+      onUndo();
+    };
+    undoBtn.addEventListener('click', handler);
+    undoTimer = setTimeout(function(){
+      toast.hidden = true;
+      undoBtn.removeEventListener('click', handler);
+      if(!undoCancelled) onCommit();
+    }, delayMs);
+  }
   async function api(path, options){
     var res = await fetch(path, options);
+    if(res.status===401){ showLoginScreen(); throw new Error('Not authenticated'); }
     if(!res.ok){ throw new Error('Request failed: ' + path + ' (' + res.status + ')'); }
     return res;
   }
 
-  // ---------- name / identity ----------
-  function getName(){ return localStorage.getItem(NAME_KEY) || 'Someone'; }
-  function getColorHex(){
-    var key = localStorage.getItem(COLOR_KEY) || 'rose';
-    var found = PALETTE.filter(function(p){ return p.key===key; })[0];
-    return found ? found.hex : PALETTE[1].hex;
+  // ---------- login / accounts ----------
+  var loginScreen = document.getElementById('loginScreen');
+  var setupScreen = document.getElementById('setupScreen');
+  var appRoot = document.getElementById('appRoot');
+  var currentUser = null; // {username, nickname, color}
+
+  function showLoginScreen(){ appRoot.hidden = true; setupScreen.hidden = true; loginScreen.hidden = false; }
+  function showSetupScreen(){ appRoot.hidden = true; loginScreen.hidden = true; setupScreen.hidden = false; }
+  function showApp(){ loginScreen.hidden = true; setupScreen.hidden = true; appRoot.hidden = false; }
+
+  document.getElementById('setupForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var username = document.getElementById('setupUsername').value.trim().toLowerCase();
+    var password = document.getElementById('setupPassword').value;
+    var confirmPassword = document.getElementById('setupPasswordConfirm').value;
+    var errEl = document.getElementById('setupError');
+    errEl.hidden = true;
+    if(password !== confirmPassword){
+      errEl.textContent = 'Passwords do not match.';
+      errEl.hidden = false;
+      return;
+    }
+    try{
+      var res = await fetch('/api/me/setup', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({username:username, password:password})
+      });
+      var body = await res.json().catch(function(){ return {}; });
+      if(!res.ok){
+        errEl.textContent = body.error || 'Could not save — try again.';
+        errEl.hidden = false;
+        return;
+      }
+      location.reload();
+    }catch(err){
+      errEl.textContent = 'Could not reach the server — check your connection.';
+      errEl.hidden = false;
+    }
+  });
+
+  document.getElementById('loginForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var username = document.getElementById('loginUsername').value.trim();
+    var password = document.getElementById('loginPassword').value;
+    var errEl = document.getElementById('loginError');
+    errEl.hidden = true;
+    try{
+      var res = await fetch('/api/login', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({username:username, password:password})
+      });
+      if(!res.ok){
+        var data = await res.json().catch(function(){ return {}; });
+        errEl.textContent = data.error || 'Wrong username or password.';
+        errEl.hidden = false;
+        return;
+      }
+      location.reload();
+    }catch(err){
+      errEl.textContent = 'Could not reach the server — check your connection.';
+      errEl.hidden = false;
+    }
+  });
+  document.getElementById('logoutBtn').addEventListener('click', async function(){
+    try{ await fetch('/api/logout', {method:'POST'}); }catch(e){}
+    location.reload();
+  });
+  document.getElementById('themeToggleBtn').textContent = currentTheme() === 'dark' ? '☀️' : '🌙';
+  document.getElementById('themeToggleBtn').addEventListener('click', function(){
+    applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+  });
+
+  // ---------- nickname / identity / avatar / mood ----------
+  var MOODS = ['😊','🥰','😴','😤','🥳','😢','🤒','✨','😂','😬'];
+  function getName(){ return currentUser ? currentUser.nickname : 'Someone'; }
+  function getColorHex(){ return currentUser ? currentUser.color : PALETTE[1].hex; }
+  function avatarHtml(url, fallback){
+    return url ? '<img src="'+url+'" alt="">' : (fallback || '👤');
   }
   function updateWhoChip(){
     document.getElementById('whoName').textContent = getName();
     document.getElementById('whoBtn').style.setProperty('--who-color', getColorHex());
+    document.getElementById('myAvatar').innerHTML = avatarHtml(currentUser && currentUser.avatarUrl);
+  }
+  var partnerProfile = null;
+  function renderPartnerChip(){
+    if(!partnerProfile) return;
+    var chip = document.getElementById('partnerChip');
+    chip.hidden = false;
+    chip.style.setProperty('--who-color', partnerProfile.color || PALETTE[2].hex);
+    document.getElementById('partnerAvatar').innerHTML = avatarHtml(partnerProfile.avatarUrl);
+    document.getElementById('partnerName').textContent = partnerProfile.nickname;
+    document.getElementById('partnerMood').textContent = partnerProfile.mood || '';
+  }
+  async function loadProfiles(){
+    try{
+      var res = await api('/api/profiles');
+      var both = await res.json();
+      partnerProfile = Object.keys(both).map(function(k){ return both[k]; })
+        .filter(function(p){ return p.username !== currentUser.username; })[0] || null;
+      renderPartnerChip();
+      updateAmbience();
+    }catch(err){ console.warn(err); }
+  }
+  var POSITIVE_MOODS = ['😊','🥰','🥳','✨','😂'];
+  var LOW_MOODS = ['😢','🤒','😴','😤','😬'];
+  function updateAmbience(){
+    var overlay = document.getElementById('ambientOverlay');
+    var mine = currentUser && currentUser.mood;
+    var theirs = partnerProfile && partnerProfile.mood;
+    var cls = '';
+    if(mine && theirs){
+      var minePos = POSITIVE_MOODS.indexOf(mine) >= 0;
+      var theirsPos = POSITIVE_MOODS.indexOf(theirs) >= 0;
+      var mineLow = LOW_MOODS.indexOf(mine) >= 0;
+      var theirsLow = LOW_MOODS.indexOf(theirs) >= 0;
+      if(minePos && theirsPos) cls = 'ambient-bright';
+      else if(mineLow || theirsLow) cls = 'ambient-quiet';
+    }
+    overlay.className = 'ambient-overlay' + (cls ? ' ' + cls : '');
   }
   function renderIdentitySwatches(container, selectedKey, onPick){
     container.innerHTML = PALETTE.map(function(p){
@@ -460,24 +1401,104 @@
       });
     });
   }
+  function renderMoodRow(selectedMood){
+    var row = document.getElementById('moodRow');
+    row.innerHTML = MOODS.map(function(m){
+      return '<button type="button" class="mood-btn'+(m===selectedMood?' selected':'')+'" data-mood="'+m+'">'+m+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(row.querySelectorAll('.mood-btn'), function(btn){
+      btn.addEventListener('click', function(){
+        var already = btn.classList.contains('selected');
+        Array.prototype.forEach.call(row.querySelectorAll('.mood-btn'), function(b){ b.classList.remove('selected'); });
+        if(!already){ btn.classList.add('selected'); pendingMood = btn.dataset.mood; }
+        else{ pendingMood = null; }
+      });
+    });
+  }
   var nameModal = document.getElementById('nameModal');
   var pendingNameColor = 'rose';
+  var pendingMood = null;
   function openNameModal(){
-    document.getElementById('nameInput').value = localStorage.getItem(NAME_KEY) || '';
-    pendingNameColor = localStorage.getItem(COLOR_KEY) || 'rose';
+    document.getElementById('nameInput').value = currentUser ? currentUser.nickname : '';
+    var match = PALETTE.filter(function(p){ return currentUser && p.hex===currentUser.color; })[0];
+    pendingNameColor = match ? match.key : 'rose';
+    pendingMood = currentUser ? currentUser.mood : null;
     renderIdentitySwatches(document.getElementById('nameColors'), pendingNameColor, function(k){ pendingNameColor = k; });
+    renderMoodRow(pendingMood);
+    document.getElementById('editAvatarPreview').innerHTML = avatarHtml(currentUser && currentUser.avatarUrl);
     nameModal.hidden = false;
     document.getElementById('nameInput').focus();
   }
   document.getElementById('whoBtn').addEventListener('click', openNameModal);
-  document.getElementById('nameSubmit').addEventListener('click', function(){
-    var val = document.getElementById('nameInput').value.trim() || 'Someone';
-    localStorage.setItem(NAME_KEY, val);
-    localStorage.setItem(COLOR_KEY, pendingNameColor);
-    nameModal.hidden = true;
-    updateWhoChip();
+  document.getElementById('avatarUploadBtn').addEventListener('click', function(){ document.getElementById('avatarInput').click(); });
+  document.getElementById('avatarInput').addEventListener('change', async function(e){
+    var file = e.target.files[0];
+    e.target.value = '';
+    if(!file) return;
+    try{
+      var blob = await compressImage(file);
+      var fd = new FormData();
+      fd.append('image', blob, 'avatar.jpg');
+      var res = await api('/api/me/avatar', {method:'POST', body: fd});
+      var result = await res.json();
+      currentUser.avatarUrl = result.avatarUrl;
+      document.getElementById('editAvatarPreview').innerHTML = avatarHtml(currentUser.avatarUrl);
+      updateWhoChip();
+    }catch(err){
+      console.warn(err);
+      alert('Could not upload that photo — try a different one.');
+    }
+  });
+  document.getElementById('nameSubmit').addEventListener('click', async function(){
+    var val = document.getElementById('nameInput').value.trim() || (currentUser ? currentUser.username : 'Someone');
+    var colorHex = (PALETTE.filter(function(p){ return p.key===pendingNameColor; })[0] || PALETTE[1]).hex;
+    try{
+      var res = await api('/api/me', {
+        method:'PATCH', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({nickname: val, color: colorHex, mood: pendingMood})
+      });
+      currentUser = await res.json();
+      updateWhoChip();
+      renderBoard();
+      updateAmbience();
+      nameModal.hidden = true;
+    }catch(err){
+      console.warn(err);
+      showError('Could not save your profile — check your connection.');
+    }
   });
   nameModal.addEventListener('click', function(e){ if(e.target===nameModal) nameModal.hidden = true; });
+
+  document.getElementById('showPasswordFormBtn').addEventListener('click', function(){
+    var form = document.getElementById('passwordForm');
+    form.hidden = !form.hidden;
+  });
+  document.getElementById('passwordForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var currentPassword = document.getElementById('currentPasswordInput').value;
+    var newPassword = document.getElementById('newPasswordInput').value;
+    var errEl = document.getElementById('passwordError');
+    errEl.hidden = true;
+    try{
+      var res = await fetch('/api/me/password', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({currentPassword:currentPassword, newPassword:newPassword})
+      });
+      if(!res.ok){
+        var data = await res.json().catch(function(){ return {}; });
+        errEl.textContent = data.error || 'Could not change password.';
+        errEl.hidden = false;
+        return;
+      }
+      document.getElementById('currentPasswordInput').value = '';
+      document.getElementById('newPasswordInput').value = '';
+      document.getElementById('passwordForm').hidden = true;
+      alert('Password updated.');
+    }catch(err){
+      errEl.textContent = 'Could not reach the server — check your connection.';
+      errEl.hidden = false;
+    }
+  });
 
   // ---------- note modal (photo sticky-note or doodle text) ----------
   function renderStickySwatches(container, selectedHex, onPick){
@@ -556,6 +1577,7 @@
     var stickers = (note.stickers||[]).concat([item]);
     note.stickers = stickers;
     renderBoard();
+    refreshLightboxOverlay(noteId);
     persistNoteField(noteId, {stickers:stickers});
   }
   function removeSticker(noteId, idx){
@@ -563,6 +1585,7 @@
     var stickers = (note.stickers||[]).slice(); stickers.splice(idx,1);
     note.stickers = stickers;
     renderBoard();
+    refreshLightboxOverlay(noteId);
     persistNoteField(noteId, {stickers:stickers});
   }
   function addNoteToPhoto(noteId, text, color){
@@ -571,6 +1594,7 @@
     var arr = (note.notes||[]).concat([item]);
     note.notes = arr;
     renderBoard();
+    refreshLightboxOverlay(noteId);
     persistNoteField(noteId, {notes:arr});
   }
   function removeNoteItem(noteId, idx){
@@ -578,34 +1602,70 @@
     var arr = (note.notes||[]).slice(); arr.splice(idx,1);
     note.notes = arr;
     renderBoard();
+    refreshLightboxOverlay(noteId);
     persistNoteField(noteId, {notes:arr});
   }
   function deletePhoto(noteId){
+    var removed = findNote(noteId);
     notes = notes.filter(function(n){ return n.id!==noteId; });
     renderBoard();
-    api('/api/notes/' + noteId, {method:'DELETE'}).catch(function(err){
-      console.warn(err); showError('Could not remove that photo — check your connection.');
-    });
+    if(currentLightboxId===noteId) closeLightbox();
+    showUndoToast('Photo removed', 5000,
+      function(){
+        api('/api/notes/' + noteId, {method:'DELETE'}).catch(function(err){
+          console.warn(err); showError('Could not remove that photo — check your connection.');
+        });
+      },
+      function(){
+        if(removed){ notes.unshift(removed); renderBoard(); }
+      }
+    );
+  }
+  function reactButtonHtml(note){
+    var mine = currentUser && (note.reactions||[]).indexOf(currentUser.username) >= 0;
+    var count = (note.reactions||[]).length;
+    return '<button type="button" class="react-btn'+(mine?' reacted':'')+'" data-react aria-label="React with a heart">'+
+      (mine?'❤️':'🤍') + (count ? (' '+count) : '') + '</button>';
+  }
+  function toggleReaction(noteId){
+    var note = findNote(noteId); if(!note || !currentUser) return;
+    var mine = currentUser.username;
+    var reactions = (note.reactions||[]).slice();
+    var i = reactions.indexOf(mine);
+    if(i>=0) reactions.splice(i,1); else reactions.push(mine);
+    note.reactions = reactions;
+    renderBoard();
+    refreshLightboxOverlay(noteId);
+    persistNoteField(noteId, {reactions:reactions});
   }
 
   // ---------- board rendering ----------
-  function noteCardHtml(n){
+  function overlayHtml(n, removable){
     var stickersHtml = (n.stickers||[]).map(function(s,i){
+      var x = '<button class="mini-x" type="button" data-remove-sticker="'+i+'" aria-label="Remove sticker">×</button>';
       return '<div class="sticker" data-idx="'+i+'" style="left:'+(s.x*100)+'%;top:'+(s.y*100)+'%;transform:translate(-50%,-50%) rotate('+s.rot+'deg)">'+s.emoji+
-        '<button class="mini-x" type="button" data-remove-sticker="'+i+'" aria-label="Remove sticker">×</button></div>';
+        (removable ? x : '') + '</div>';
     }).join('');
     var notesHtml = (n.notes||[]).map(function(note,i){
+      var x = '<button class="mini-x" type="button" data-remove-note="'+i+'" aria-label="Remove note">×</button>';
       return '<div class="stickynote" data-idx="'+i+'" style="left:'+(note.x*100)+'%;top:'+(note.y*100)+'%;background:'+note.color+';transform:translate(-50%,-50%) rotate('+((i%2?1:-1)*2)+'deg)">'+escapeHtml(note.text)+
-        '<button class="mini-x" type="button" data-remove-note="'+i+'" aria-label="Remove note">×</button></div>';
+        (removable ? x : '') + '</div>';
     }).join('');
+    return stickersHtml + notesHtml;
+  }
+
+  function noteCardHtml(n){
     var chips = STICKERS.map(function(e){ return '<button type="button" class="chip" data-add-sticker="'+e+'">'+e+'</button>'; }).join('');
     return '<div class="card" style="--rot:'+hashRot(n.id)+'deg" data-id="'+n.id+'">'+
+      '<input type="checkbox" class="bulk-check" data-bulk-check>'+
       '<div class="photo-wrap">'+
-        '<img src="'+n.image+'" alt="A shared memory" draggable="false" loading="lazy">'+
-        '<div class="overlay-layer">'+stickersHtml+notesHtml+'</div>'+
+        '<img src="'+n.image+'" alt="A shared memory" draggable="false" loading="lazy" data-open-lightbox>'+
+        '<button type="button" class="expand-btn" data-open-lightbox aria-label="View fullscreen">⤢</button>'+
+        '<div class="overlay-layer">'+overlayHtml(n, true)+'</div>'+
       '</div>'+
       '<div class="caption">'+
         '<span class="author" style="color:'+(n.authorColor||'inherit')+'">'+escapeHtml(n.author||'Someone')+'</span>'+
+        reactButtonHtml(n)+
         '<span class="date">'+formatDate(n.createdAt)+'</span>'+
       '</div>'+
       '<button type="button" class="decorate-toggle" data-decorate>🏷️ decorate</button>'+
@@ -629,32 +1689,78 @@
     boardGrid.appendChild(addBtn);
     boardGrid.insertAdjacentHTML('beforeend', currentNotes.map(noteCardHtml).join(''));
     renderArchive();
+    renderOnThisDay();
   }
 
+  function noteMatchesQuery(n, query){
+    if(matchesQuery(n.author, query)) return true;
+    if((n.notes||[]).some(function(note){ return matchesQuery(note.text, query); })) return true;
+    if(matchesQuery(monthLabel(n.month), query)) return true;
+    return false;
+  }
   function renderArchive(){
     var cur = currentMonth();
+    var query = (document.getElementById('archiveSearch').value || '').trim().toLowerCase();
     var groups = {};
     notes.forEach(function(n){
       if(n.month===cur) return;
+      if(query && !noteMatchesQuery(n, query)) return;
       (groups[n.month] = groups[n.month]||[]).push(n);
     });
     var months = Object.keys(groups).sort().reverse();
     if(!months.length){
-      archiveList.innerHTML = '<p class="empty-note">Nothing archived yet — this month\'s pins move here once the calendar turns.</p>';
+      archiveList.innerHTML = query
+        ? '<p class="empty-note">No archived pins match "'+escapeHtml(query)+'".</p>'
+        : '<p class="empty-note">Nothing archived yet — this month\'s pins move here once the calendar turns.</p>';
       return;
     }
     archiveList.innerHTML = months.map(function(m){
-      return '<details class="archive-month">'+
+      return '<details class="archive-month"' + (query ? ' open' : '') + '>'+
         '<summary><span class="ribbon">'+monthLabel(m)+'</span><span class="count">'+groups[m].length+' pinned</span></summary>'+
         '<div class="board-grid archive-grid">'+groups[m].map(noteCardHtml).join('')+'</div>'+
       '</details>';
     }).join('');
   }
+  document.getElementById('archiveSearch').addEventListener('input', debounce(renderArchive, 150));
 
-  // ---------- delegated interactions on cards ----------
+  // ---------- bulk select (archive) ----------
+  var archiveSection = document.getElementById('archiveSection');
+  function setArchiveBulkMode(on){
+    archiveSection.classList.toggle('bulk-mode', on);
+    document.getElementById('archiveSelectBtn').hidden = on;
+    document.getElementById('archiveBulkBar').hidden = !on;
+    if(!on){
+      Array.prototype.forEach.call(archiveSection.querySelectorAll('.bulk-check'), function(cb){ cb.checked = false; });
+    }
+    updateArchiveBulkCount();
+  }
+  function updateArchiveBulkCount(){
+    var checked = archiveSection.querySelectorAll('.bulk-check:checked').length;
+    document.getElementById('archiveBulkCount').textContent = checked + ' selected';
+  }
+  document.getElementById('archiveSelectBtn').addEventListener('click', function(){ setArchiveBulkMode(true); });
+  document.getElementById('archiveBulkCancel').addEventListener('click', function(){ setArchiveBulkMode(false); });
+  archiveSection.addEventListener('change', function(e){
+    if(e.target.matches('.bulk-check')) updateArchiveBulkCount();
+  });
+  document.getElementById('archiveBulkDelete').addEventListener('click', function(){
+    var ids = Array.prototype.map.call(archiveSection.querySelectorAll('.bulk-check:checked'), function(cb){
+      return cb.closest('.card').dataset.id;
+    });
+    if(!ids.length) return;
+    if(!confirm('Delete ' + ids.length + ' photo' + (ids.length===1?'':'s') + ' for both of you?')) return;
+    notes = notes.filter(function(n){ return ids.indexOf(n.id) < 0; });
+    setArchiveBulkMode(false);
+    renderBoard();
+    ids.forEach(function(id){
+      api('/api/notes/' + id, {method:'DELETE'}).catch(function(err){ console.warn(err); });
+    });
+  });
+
+  // ---------- delegated interactions on cards (and the lightbox, which works the same way) ----------
   document.addEventListener('click', function(e){
-    var card = e.target.closest ? e.target.closest('.card') : null;
-    if(!card || card.id==='addPhotoBtn') return;
+    var card = e.target.closest ? e.target.closest('.card, .lightbox-editable') : null;
+    if(!card || card.id==='addPhotoBtn' || !card.dataset.id) return;
     var id = card.dataset.id;
     if(e.target.matches('[data-decorate]')){ card.classList.toggle('open'); }
     else if(e.target.matches('[data-add-sticker]')){ addSticker(id, e.target.getAttribute('data-add-sticker')); }
@@ -662,13 +1768,498 @@
     else if(e.target.matches('[data-remove-note]')){ removeNoteItem(id, Number(e.target.getAttribute('data-remove-note'))); }
     else if(e.target.matches('[data-add-note-btn]')){ openNoteComposer(id); }
     else if(e.target.matches('[data-delete-btn]')){ if(confirm('Remove this photo for both of you?')) deletePhoto(id); }
+    else if(e.target.matches('[data-open-lightbox]')){ openLightbox(id); }
+    else if(e.target.matches('[data-react]')){ toggleReaction(id); }
+    else if(e.target.matches('[data-set-location]')){ openLocationPicker(id); }
+  });
+
+  // ---------- lightbox: fullscreen, download, share ----------
+  var lightbox = document.getElementById('lightbox');
+  var currentLightboxId = null;
+  var canShareFiles = false;
+  try{
+    canShareFiles = !!(navigator.share && navigator.canShare &&
+      navigator.canShare({ files: [new File([new Blob(['x'])], 'x.jpg', {type:'image/jpeg'})] }));
+  }catch(e){ canShareFiles = false; }
+
+  var lightboxChipsHtml = STICKERS.map(function(e){ return '<button type="button" class="chip" data-add-sticker="'+e+'">'+e+'</button>'; }).join('');
+  document.getElementById('lightboxStickerChips').innerHTML = lightboxChipsHtml;
+
+  function renderLightboxOverlay(note){
+    document.getElementById('lightboxPhoto').innerHTML =
+      '<img src="'+note.image+'" alt="A shared memory">' +
+      '<div class="overlay-layer">'+overlayHtml(note, true)+'</div>';
+    document.getElementById('lightboxReactSlot').innerHTML = reactButtonHtml(note);
+  }
+  function refreshLightboxOverlay(noteId){
+    if(currentLightboxId !== noteId) return;
+    var note = findNote(noteId); if(!note) return;
+    renderLightboxOverlay(note);
+  }
+  function openLightbox(noteId){
+    var note = findNote(noteId); if(!note) return;
+    currentLightboxId = noteId;
+    document.getElementById('lightboxEditable').dataset.id = noteId;
+    renderLightboxOverlay(note);
+    document.getElementById('lightboxNote').hidden = true;
+    lightbox.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox(){
+    lightbox.hidden = true;
+    document.body.style.overflow = '';
+    currentLightboxId = null;
+  }
+  document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', function(e){ if(e.target===lightbox) closeLightbox(); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && !lightbox.hidden) closeLightbox(); });
+
+  function loadImageForCanvas(src){
+    return new Promise(function(resolve,reject){
+      var img = new Image();
+      img.onload = function(){ resolve(img); };
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+  function roundRect(cx, x, y, w, h, r){
+    cx.beginPath();
+    cx.moveTo(x+r,y);
+    cx.arcTo(x+w,y,x+w,y+h,r);
+    cx.arcTo(x+w,y+h,x,y+h,r);
+    cx.arcTo(x,y+h,x,y,r);
+    cx.arcTo(x,y,x+w,y,r);
+    cx.closePath();
+  }
+  function wrapLines(cx, text, maxWidth, maxLines){
+    var words = String(text||'').split(/\s+/).filter(Boolean);
+    var lines = []; var line = '';
+    words.forEach(function(word){
+      var test = line ? line+' '+word : word;
+      if(cx.measureText(test).width > maxWidth && line){ lines.push(line); line = word; }
+      else{ line = test; }
+    });
+    if(line) lines.push(line);
+    return lines.slice(0, maxLines);
+  }
+  async function buildComposite(note){
+    var img = await loadImageForCanvas(note.image);
+    var longest = Math.max(img.naturalWidth, img.naturalHeight) || 1200;
+    var scale = Math.min(1, 1600/longest);
+    var w = Math.max(1, Math.round(img.naturalWidth*scale));
+    var h = Math.max(1, Math.round(img.naturalHeight*scale));
+    var canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    var cx = canvas.getContext('2d');
+    cx.drawImage(img, 0, 0, w, h);
+
+    try{ await document.fonts.ready; }catch(e){}
+
+    (note.stickers||[]).forEach(function(s){
+      cx.save();
+      cx.translate(s.x*w, s.y*h);
+      cx.rotate((s.rot||0)*Math.PI/180);
+      cx.font = Math.round(w*0.09) + 'px "Segoe UI Emoji","Noto Color Emoji",sans-serif';
+      cx.textAlign = 'center';
+      cx.textBaseline = 'middle';
+      cx.fillText(s.emoji, 0, 0);
+      cx.restore();
+    });
+
+    (note.notes||[]).forEach(function(item, i){
+      var noteW = w*0.24, noteH = h*0.17;
+      var rot = ((i%2) ? 1 : -1) * 2;
+      cx.save();
+      cx.translate(item.x*w, item.y*h);
+      cx.rotate(rot*Math.PI/180);
+      cx.shadowColor = 'rgba(0,0,0,.35)';
+      cx.shadowBlur = w*0.01; cx.shadowOffsetY = h*0.004;
+      cx.fillStyle = item.color;
+      roundRect(cx, -noteW/2, -noteH/2, noteW, noteH, Math.max(2, w*0.004));
+      cx.fill();
+      cx.shadowColor = 'transparent';
+      cx.fillStyle = '#3a2c22';
+      var fontSize = Math.round(w*0.026);
+      cx.font = fontSize + 'px Caveat, cursive';
+      cx.textAlign = 'center';
+      cx.textBaseline = 'top';
+      var lines = wrapLines(cx, item.text, noteW*0.85, 4);
+      lines.forEach(function(line, li){
+        cx.fillText(line, 0, -noteH/2 + fontSize*0.5 + li*fontSize*1.05);
+      });
+      cx.restore();
+    });
+
+    return new Promise(function(resolve){ canvas.toBlob(resolve, 'image/jpeg', 0.92); });
+  }
+
+  // ---------- shareable story cards (9:16, for IG/Snap/WhatsApp Stories) ----------
+  var STORY_W = 1080, STORY_H = 1920;
+  var STORY_THEMES = [
+    { key:'cork', top:'#c9975f', bottom:'#7a5a3a', sw:'#b98a56' },
+    { key:'rose', top:'#e2897a', bottom:'#96382a', sw:'#d5675a' },
+    { key:'sky',  top:'#8fb8d8', bottom:'#2f5570', sw:'#4f83ab' },
+    { key:'dark', top:'#4a3826', bottom:'#1c140c', sw:'#241a10' }
+  ];
+  function storyTheme(key){
+    return STORY_THEMES.filter(function(t){ return t.key===key; })[0] || STORY_THEMES[0];
+  }
+  function createStoryCanvas(themeKey){
+    var theme = storyTheme(themeKey);
+    var canvas = document.createElement('canvas');
+    canvas.width = STORY_W; canvas.height = STORY_H;
+    var cx = canvas.getContext('2d');
+    var grad = cx.createLinearGradient(0, 0, 0, STORY_H);
+    grad.addColorStop(0, theme.top);
+    grad.addColorStop(1, theme.bottom);
+    cx.fillStyle = grad;
+    cx.fillRect(0, 0, STORY_W, STORY_H);
+    return { canvas: canvas, cx: cx };
+  }
+  function drawStoryWatermark(cx){
+    cx.textAlign = 'center';
+    cx.font = '600 34px Quicksand, sans-serif';
+    cx.fillStyle = 'rgba(255,255,255,.85)';
+    cx.fillText('📌 Pinned Together', STORY_W/2, STORY_H - 60);
+  }
+  function drawContainImage(cx, img, dx, dy, dw, dh){
+    var ir = img.naturalWidth / img.naturalHeight;
+    var br = dw / dh;
+    var w, h;
+    if(ir > br){ w = dw; h = dw/ir; } else { h = dh; w = dh*ir; }
+    var x = dx + (dw-w)/2, y = dy + (dh-h)/2;
+    cx.drawImage(img, x, y, w, h);
+    return { x:x, y:y, w:w, h:h };
+  }
+  function drawCoverImage(cx, img, dx, dy, dw, dh, radius){
+    var ir = img.naturalWidth / img.naturalHeight;
+    var br = dw / dh;
+    var sx, sy, sw, sh;
+    if(ir > br){ sh = img.naturalHeight; sw = sh*br; sx = (img.naturalWidth-sw)/2; sy = 0; }
+    else{ sw = img.naturalWidth; sh = sw/br; sx = 0; sy = (img.naturalHeight-sh)/2; }
+    cx.save();
+    roundRect(cx, dx, dy, dw, dh, radius||24);
+    cx.clip();
+    cx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+    cx.restore();
+  }
+  async function fontsReady(){ try{ await document.fonts.ready; }catch(e){} }
+  function hostnameOf(url){ try{ return new URL(url).hostname.replace(/^www\./,''); }catch(e){ return url; } }
+  function canvasToStoryBlob(canvas){
+    return new Promise(function(resolve){ canvas.toBlob(resolve, 'image/jpeg', 0.92); });
+  }
+
+  async function generateCountdownStory(emoji, bigText, label, sub, theme, captionOverride){
+    var built = createStoryCanvas(theme); var cx = built.cx;
+    await fontsReady();
+    cx.textAlign = 'center';
+    cx.font = '160px serif';
+    cx.fillStyle = '#fff';
+    cx.fillText(emoji, STORY_W/2, 620);
+    cx.font = '700 58px Quicksand, sans-serif';
+    var labelLines = wrapLines(cx, label, 880, 3);
+    labelLines.forEach(function(line,i){ cx.fillText(line, STORY_W/2, 760 + i*70); });
+    var bigY = 900 + labelLines.length*70;
+    if(bigText){
+      cx.font = '220px Caveat, cursive';
+      var bigLines = wrapLines(cx, bigText, 960, 2);
+      bigLines.forEach(function(line,i){ cx.fillText(line, STORY_W/2, bigY + 220 + i*220); });
+      bigY += 220 + (bigLines.length-1)*220;
+    }
+    var subText = captionOverride || sub;
+    if(subText){
+      cx.font = '500 42px Quicksand, sans-serif';
+      cx.fillStyle = 'rgba(255,255,255,.85)';
+      cx.fillText(subText, STORY_W/2, bigY + 100);
+    }
+    drawStoryWatermark(cx);
+    return canvasToStoryBlob(built.canvas);
+  }
+
+  async function generateOnThisDayStory(pick, theme, captionOverride){
+    var built = createStoryCanvas(theme); var cx = built.cx;
+    var img = await loadImageForCanvas(pick.image);
+    var boxSize = 880, boxX = (STORY_W-boxSize)/2, boxY = 280;
+    drawCoverImage(cx, img, boxX, boxY, boxSize, boxSize, 28);
+    await fontsReady();
+    cx.textAlign = 'center';
+    cx.font = '600 46px Quicksand, sans-serif';
+    cx.fillStyle = '#fff';
+    cx.fillText('📸 On This Day', STORY_W/2, 190);
+    cx.font = '52px Caveat, cursive';
+    var monthTxt = new Date(pick.createdAt).toLocaleDateString(undefined, {month:'long', day:'numeric', year:'numeric'});
+    cx.fillText(captionOverride || ((pick.author||'Someone') + ' · ' + monthTxt), STORY_W/2, boxY+boxSize+90);
+    drawStoryWatermark(cx);
+    return canvasToStoryBlob(built.canvas);
+  }
+
+  async function generatePinStory(note, theme, captionOverride){
+    var built = createStoryCanvas(theme); var cx = built.cx;
+    var img = await loadImageForCanvas(note.image);
+    var boxX = 60, boxY = 220, boxW = STORY_W-120, boxH = 1300;
+    var rect = drawContainImage(cx, img, boxX, boxY, boxW, boxH);
+    await fontsReady();
+
+    (note.stickers||[]).forEach(function(s){
+      cx.save();
+      cx.translate(rect.x + s.x*rect.w, rect.y + s.y*rect.h);
+      cx.rotate((s.rot||0)*Math.PI/180);
+      cx.font = Math.round(rect.w*0.09) + 'px "Segoe UI Emoji","Noto Color Emoji",sans-serif';
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText(s.emoji, 0, 0);
+      cx.restore();
+    });
+    (note.notes||[]).forEach(function(item, i){
+      var noteW = rect.w*0.26, noteH = rect.h*0.14;
+      var rot = ((i%2) ? 1 : -1) * 2;
+      cx.save();
+      cx.translate(rect.x + item.x*rect.w, rect.y + item.y*rect.h);
+      cx.rotate(rot*Math.PI/180);
+      cx.shadowColor = 'rgba(0,0,0,.35)'; cx.shadowBlur = rect.w*0.012; cx.shadowOffsetY = rect.h*0.006;
+      cx.fillStyle = item.color;
+      roundRect(cx, -noteW/2, -noteH/2, noteW, noteH, Math.max(2, rect.w*0.005));
+      cx.fill();
+      cx.shadowColor = 'transparent';
+      cx.fillStyle = '#3a2c22';
+      var fontSize = Math.round(rect.w*0.03);
+      cx.font = fontSize + 'px Caveat, cursive';
+      cx.textAlign = 'center'; cx.textBaseline = 'top';
+      var lines = wrapLines(cx, item.text, noteW*0.85, 4);
+      lines.forEach(function(line, li){ cx.fillText(line, 0, -noteH/2 + fontSize*0.5 + li*fontSize*1.05); });
+      cx.restore();
+    });
+
+    cx.textAlign = 'center';
+    cx.font = '600 40px Quicksand, sans-serif';
+    cx.fillStyle = '#fff';
+    cx.fillText(captionOverride || ((note.author||'Someone') + ' · ' + formatDate(note.createdAt)), STORY_W/2, boxY+boxH+70);
+    drawStoryWatermark(cx);
+    return canvasToStoryBlob(built.canvas);
+  }
+
+  async function generateSongStory(song, theme, captionOverride){
+    var built = createStoryCanvas(theme); var cx = built.cx;
+    await fontsReady();
+    cx.textAlign = 'center';
+    cx.font = '600 44px Quicksand, sans-serif';
+    cx.fillStyle = '#fff';
+    cx.fillText('🎵 Now Playing', STORY_W/2, 170);
+
+    var textY;
+    if(song.thumbnailUrl){
+      var art;
+      try{ art = await loadImageForCanvas(song.thumbnailUrl); }catch(e){ art = null; }
+      if(art){
+        var artSize = 760, artX = (STORY_W-artSize)/2, artY = 260;
+        drawCoverImage(cx, art, artX, artY, artSize, artSize, 24);
+        textY = artY + artSize + 110;
+      }
+    }
+    if(textY === undefined){
+      cx.font = '220px serif';
+      cx.fillText('🎵', STORY_W/2, 700);
+      textY = 900;
+    }
+
+    cx.font = '64px Caveat, cursive';
+    cx.fillStyle = '#fff';
+    var titleLines = wrapLines(cx, song.trackTitle || hostnameOf(song.url), 900, 2);
+    titleLines.forEach(function(line, i){ cx.fillText(line, STORY_W/2, textY + i*66); });
+    textY += titleLines.length*66 + 20;
+
+    if(song.trackAuthor){
+      cx.font = '500 42px Quicksand, sans-serif';
+      cx.fillStyle = 'rgba(255,255,255,.9)';
+      cx.fillText(song.trackAuthor, STORY_W/2, textY + 40);
+      textY += 70;
+    }
+    if(song.note){
+      cx.font = '44px Caveat, cursive';
+      cx.fillStyle = 'rgba(255,255,255,.85)';
+      var noteLines = wrapLines(cx, '"' + song.note + '"', 860, 2);
+      noteLines.forEach(function(line, i){ cx.fillText(line, STORY_W/2, textY + 50 + i*52); });
+      textY += 50 + noteLines.length*52;
+    }
+    cx.font = '500 38px Quicksand, sans-serif';
+    cx.fillStyle = 'rgba(255,255,255,.75)';
+    cx.fillText(captionOverride || ('shared by ' + (song.author||'Someone')), STORY_W/2, textY + 60);
+
+    drawStoryWatermark(cx);
+    return canvasToStoryBlob(built.canvas);
+  }
+
+  async function generateCollageStory(pins, theme, captionOverride){
+    var built = createStoryCanvas(theme); var cx = built.cx;
+    await fontsReady();
+    cx.textAlign = 'center';
+    cx.font = '600 54px Quicksand, sans-serif';
+    cx.fillStyle = '#fff';
+    cx.fillText(captionOverride || 'Our Favorites', STORY_W/2, 160);
+    var selected = pins.slice(0, 6);
+    var cols = 2, gap = 24, startY = 230;
+    var boxW = (STORY_W - 60*2 - gap) / cols, boxH = boxW;
+    for(var i=0; i<selected.length; i++){
+      var col = i % cols, row = Math.floor(i/cols);
+      var x = 60 + col*(boxW+gap);
+      var y = startY + row*(boxH+gap);
+      var img = await loadImageForCanvas(selected[i].image);
+      drawCoverImage(cx, img, x, y, boxW, boxH, 20);
+    }
+    drawStoryWatermark(cx);
+    return canvasToStoryBlob(built.canvas);
+  }
+
+  var storyPreviewModal = document.getElementById('storyPreviewModal');
+  var pendingStoryBlob = null;
+  var pendingStoryFilename = 'pinned-together-story.jpg';
+  var pendingStoryMaker = null; // function(theme, captionOverride) => Promise<Blob>
+  var currentStoryTheme = 'cork';
+
+  function buildStoryThemeRow(){
+    var row = document.getElementById('storyThemeRow');
+    row.innerHTML = STORY_THEMES.map(function(t){
+      return '<button type="button" class="story-theme-swatch'+(t.key===currentStoryTheme?' selected':'')+'" data-theme-key="'+t.key+'" style="--sw:'+t.sw+'" title="'+t.key+'"></button>';
+    }).join('');
+  }
+  buildStoryThemeRow();
+  document.getElementById('storyThemeRow').addEventListener('click', function(e){
+    var key = e.target.getAttribute && e.target.getAttribute('data-theme-key');
+    if(!key) return;
+    currentStoryTheme = key;
+    buildStoryThemeRow();
+    regenerateStoryPreview();
+  });
+  document.getElementById('storyCaptionInput').addEventListener('input', debounce(regenerateStoryPreview, 300));
+
+  async function regenerateStoryPreview(){
+    if(!pendingStoryMaker) return;
+    try{
+      var caption = document.getElementById('storyCaptionInput').value.trim();
+      var blob = await pendingStoryMaker(currentStoryTheme, caption || null);
+      pendingStoryBlob = blob;
+      var url = URL.createObjectURL(blob);
+      var img = document.getElementById('storyPreviewImg');
+      var oldUrl = img.dataset.blobUrl;
+      img.src = url;
+      img.dataset.blobUrl = url;
+      if(oldUrl) URL.revokeObjectURL(oldUrl);
+    }catch(err){
+      console.warn(err);
+    }
+  }
+  function openStoryPreview(maker, filename, defaultCaption){
+    pendingStoryMaker = maker;
+    pendingStoryFilename = filename;
+    document.getElementById('storyCaptionInput').value = '';
+    document.getElementById('storyCaptionInput').placeholder = defaultCaption ? ('Custom caption — default: "' + defaultCaption + '"') : 'Custom caption (optional)';
+    document.getElementById('storyShareBtn').hidden = !canShareFiles;
+    storyPreviewModal.hidden = false;
+    regenerateStoryPreview();
+  }
+  async function shareOrPreview(maker, filename, defaultCaption){
+    openStoryPreview(maker, filename, defaultCaption);
+  }
+  document.getElementById('storyDownloadBtn').addEventListener('click', function(){
+    if(!pendingStoryBlob) return;
+    var url = URL.createObjectURL(pendingStoryBlob);
+    var a = document.createElement('a');
+    a.href = url; a.download = pendingStoryFilename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  });
+  document.getElementById('storyShareBtn').addEventListener('click', async function(){
+    if(!pendingStoryBlob) return;
+    try{
+      var file = new File([pendingStoryBlob], pendingStoryFilename, {type:'image/jpeg'});
+      await navigator.share({ files:[file], title:'Pinned Together' });
+    }catch(err){
+      if(err && err.name==='AbortError') return;
+      alert('Sharing did not work here — try Download instead.');
+    }
+  });
+  document.getElementById('storyPreviewClose').addEventListener('click', function(){ storyPreviewModal.hidden = true; });
+  storyPreviewModal.addEventListener('click', function(e){ if(e.target===storyPreviewModal) storyPreviewModal.hidden = true; });
+
+  document.getElementById('shareTogetherBtn').addEventListener('click', function(){
+    if(!coupleSettings.togetherSince) return;
+    var since = parseYmd(coupleSettings.togetherSince);
+    var today = new Date(); today.setHours(0,0,0,0);
+    var days = daysBetween(since, today) + 1;
+    var sinceLabel = 'together since ' + since.toLocaleDateString(undefined,{month:'long', day:'numeric', year:'numeric'});
+    shareOrPreview(
+      function(theme, caption){ return generateCountdownStory('💞', String(days), days===1 ? 'Day Together' : 'Days Together', sinceLabel, theme, caption); },
+      'days-together.jpg', sinceLabel
+    );
+  });
+  document.getElementById('shareBigCountdownBtn').addEventListener('click', function(){
+    if(!coupleSettings.bigEventLabel || !coupleSettings.bigEventDate) return;
+    var big = parseYmd(coupleSettings.bigEventDate);
+    var today = new Date(); today.setHours(0,0,0,0);
+    var diff = daysBetween(today, big);
+    var bigText, sub;
+    if(diff > 0){ bigText = String(diff); sub = (diff===1?'day to go':'days to go'); }
+    else if(diff === 0){ bigText = 'Today!'; sub = ''; }
+    else{ bigText = String(-diff); sub = (diff===-1?'day since':'days since'); }
+    var sub2 = (sub ? sub + ' — ' : '') + big.toLocaleDateString(undefined,{month:'long', day:'numeric', year:'numeric'});
+    shareOrPreview(
+      function(theme, caption){ return generateCountdownStory('🎉', bigText, coupleSettings.bigEventLabel, sub2, theme, caption); },
+      'countdown.jpg', sub2
+    );
+  });
+  document.getElementById('shareOtdBtn').addEventListener('click', function(){
+    if(!currentOtdPick) return;
+    shareOrPreview(function(theme, caption){ return generateOnThisDayStory(currentOtdPick, theme, caption); }, 'on-this-day.jpg', null);
+  });
+  document.getElementById('lightboxStoryBtn').addEventListener('click', function(){
+    var note = findNote(currentLightboxId); if(!note) return;
+    shareOrPreview(function(theme, caption){ return generatePinStory(note, theme, caption); }, 'pinned-together-story.jpg', null);
+  });
+  document.getElementById('songList').addEventListener('click', function(e){
+    if(!e.target.matches('[data-song-share]')) return;
+    var id = e.target.closest('.song-row').dataset.id;
+    var song = songs.filter(function(s){ return String(s.id)===String(id); })[0];
+    if(!song) return;
+    shareOrPreview(function(theme, caption){ return generateSongStory(song, theme, caption); }, 'song-of-the-day.jpg', null);
+  });
+  document.getElementById('shareCollageBtn').addEventListener('click', function(){
+    if(!highlightPins.length) return;
+    shareOrPreview(function(theme, caption){ return generateCollageStory(highlightPins, theme, caption); }, 'our-favorites.jpg', 'Our Favorites');
+  });
+  document.getElementById('milestoneTimeline').addEventListener('click', function(e){
+    var id = e.target.getAttribute && e.target.getAttribute('data-milestone-share');
+    if(!id) return;
+    var m = milestones.filter(function(x){ return x.id===id; })[0];
+    if(!m) return;
+    var dateLabel = new Date(m.date+'T00:00:00').toLocaleDateString(undefined,{month:'long', day:'numeric', year:'numeric'});
+    shareOrPreview(function(theme, caption){ return generateCountdownStory('🏳️', m.title, 'A Milestone', dateLabel, theme, caption); }, 'milestone.jpg', dateLabel);
+  });
+
+  document.getElementById('lightboxDownload').addEventListener('click', async function(){
+    var note = findNote(currentLightboxId); if(!note) return;
+    var noteEl = document.getElementById('lightboxNote');
+    try{
+      var blob = await buildComposite(note);
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'pinned-together-' + (note.createdAt||'').slice(0,10) + '.jpg';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    }catch(err){
+      console.warn('download failed', err);
+      noteEl.textContent = 'Could not prepare that image — try again.';
+      noteEl.hidden = false;
+    }
   });
 
   document.addEventListener('pointerdown', function(e){
     var target = e.target.closest ? e.target.closest('.sticker, .stickynote') : null;
     if(!target) return;
     if(e.target.closest('.mini-x')) return;
-    var card = target.closest('.card');
+    var card = target.closest('.card, .lightbox-editable');
+    if(!card || !card.dataset.id) return;
     var overlay = target.parentElement;
     var noteId = card.dataset.id;
     var idx = Number(target.dataset.idx);
@@ -679,6 +2270,8 @@
     try{ el.setPointerCapture(e.pointerId); }catch(err){}
     var rect = overlay.getBoundingClientRect();
     var x=null, y=null;
+    var history = [];
+    el.classList.add('dragging');
     function move(ev){
       x = (ev.clientX-rect.left)/rect.width;
       y = (ev.clientY-rect.top)/rect.height;
@@ -686,14 +2279,49 @@
       y = Math.min(0.96, Math.max(0.04, y));
       el.style.left = (x*100)+'%';
       el.style.top = (y*100)+'%';
+      history.push({x:x, y:y, t:performance.now()});
+      if(history.length > 5) history.shift();
     }
     function up(){
       el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up);
-      if(x!=null && y!=null) commitDragEnd(noteId, idx, kind, x, y);
+      el.classList.remove('dragging');
+      if(x==null || y==null) return;
+      var vx = 0, vy = 0;
+      if(history.length >= 2){
+        var a = history[0], b = history[history.length-1];
+        var dt = b.t - a.t;
+        if(dt > 0){ vx = (b.x-a.x)/dt; vy = (b.y-a.y)/dt; }
+      }
+      if(Math.sqrt(vx*vx + vy*vy) < 0.0003){
+        commitDragEnd(noteId, idx, kind, x, y);
+      } else {
+        coastToRest(el, x, y, vx, vy, function(finalX, finalY){
+          commitDragEnd(noteId, idx, kind, finalX, finalY);
+        });
+      }
     }
     el.addEventListener('pointermove', move);
     el.addEventListener('pointerup', up, {once:true});
+  }
+  function coastToRest(el, x, y, vx, vy, done){
+    var friction = 0.92;
+    var lastT = performance.now();
+    function frame(now){
+      var dt = Math.min(32, now - lastT);
+      lastT = now;
+      x += vx*dt; y += vy*dt;
+      vx *= friction; vy *= friction;
+      if(x < 0.04){ x = 0.04; vx = -vx*0.4; }
+      if(x > 0.96){ x = 0.96; vx = -vx*0.4; }
+      if(y < 0.04){ y = 0.04; vy = -vy*0.4; }
+      if(y > 0.96){ y = 0.96; vy = -vy*0.4; }
+      el.style.left = (x*100)+'%';
+      el.style.top = (y*100)+'%';
+      if(Math.sqrt(vx*vx + vy*vy) < 0.00015){ done(x, y); return; }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
   }
   function commitDragEnd(noteId, idx, kind, x, y){
     var note = findNote(noteId); if(!note) return;
@@ -754,8 +2382,6 @@
       var blob = await compressImage(file);
       var fd = new FormData();
       fd.append('image', blob, 'photo.jpg');
-      fd.append('author', getName());
-      fd.append('authorColor', getColorHex());
       var res = await api('/api/notes', {method:'POST', body: fd});
       var created = await res.json();
       notes.unshift(created);
@@ -898,19 +2524,29 @@
     if(isImageName(item.name)){
       thumb = '<img src="'+url+'" alt="" loading="lazy">';
     } else if(isVideoName(item.name)){
-      thumb = '<video src="'+url+'" controls preload="metadata"></video>';
+      thumb = '<button type="button" class="video-placeholder" data-play-video="'+url+'" aria-label="Play video">'+
+        '<span class="video-play-icon">▶</span>'+
+      '</button>';
     } else {
       thumb = '<span>📄</span>';
     }
     return '<div class="drive-item" data-name="'+escapeHtml(item.name)+'">'+
+      '<input type="checkbox" class="bulk-check" data-bulk-check>'+
       '<div class="drive-thumb">'+thumb+'</div>'+
-      '<div class="drive-name">'+escapeHtml(displayName(item.name))+'</div>'+
-      '<div class="drive-meta"><span>'+formatBytes(item.size)+'</span><span>'+formatDate(item.modifiedAt)+'</span></div>'+
+      '<div class="drive-name" data-drive-name>'+escapeHtml(displayName(item.name))+'</div>'+
+      '<div class="drive-meta">'+
+        '<span class="drive-author" style="color:'+(item.authorColor||'inherit')+'">'+escapeHtml(item.author||'Someone')+'</span>'+
+        '<span>'+formatBytes(item.size)+' · '+formatDate(item.modifiedAt)+'</span>'+
+      '</div>'+
       '<div class="drive-actions">'+
-        '<a href="'+url+'" download="'+escapeHtml(displayName(item.name))+'">⬇ Download</a>'+
+        '<a href="'+url+'" download="'+escapeHtml(displayName(item.name))+'">⬇</a>'+
+        '<button type="button" class="tool-btn" data-drive-rename>✏️</button>'+
         '<button type="button" class="tool-btn danger" data-drive-delete>🗑</button>'+
       '</div>'+
     '</div>';
+  }
+  function matchesQuery(text, query){
+    return String(text||'').toLowerCase().indexOf(query) >= 0;
   }
   function renderDrive(){
     var list = document.getElementById('driveList');
@@ -918,23 +2554,38 @@
       list.innerHTML = '<p class="empty-note">Nothing uploaded yet — add your first photo or video.</p>';
       return;
     }
+    var query = (document.getElementById('driveSearch').value || '').trim().toLowerCase();
+    var visible = query
+      ? driveItems.filter(function(item){
+          return matchesQuery(displayName(item.name), query) || matchesQuery(item.author, query);
+        })
+      : driveItems;
+
+    if(query && !visible.length){
+      list.innerHTML = '<p class="empty-note">No files match "'+escapeHtml(query)+'".</p>';
+      return;
+    }
+
     var cur = currentMonth();
     var currentItems = [];
     var groups = {};
-    driveItems.forEach(function(item){
+    visible.forEach(function(item){
       var m = (item.modifiedAt || '').slice(0,7) || cur;
       if(m===cur){ currentItems.push(item); }
       else { (groups[m] = groups[m]||[]).push(item); }
     });
     var months = Object.keys(groups).sort().reverse();
 
-    var html = '<div class="drive-current">' +
-      '<span class="drive-month-label">' + monthLabel(cur) + '</span>' +
-      '<div class="drive-list">' + (currentItems.length ? currentItems.map(driveItemHtml).join('') : '<p class="empty-note">Nothing pinned to the drive this month yet.</p>') + '</div>' +
-    '</div>';
+    var html = '';
+    if(currentItems.length || !query){
+      html += '<div class="drive-current">' +
+        '<span class="drive-month-label">' + monthLabel(cur) + '</span>' +
+        '<div class="drive-list">' + (currentItems.length ? currentItems.map(driveItemHtml).join('') : '<p class="empty-note">Nothing pinned to the drive this month yet.</p>') + '</div>' +
+      '</div>';
+    }
 
     html += months.map(function(m){
-      return '<details class="archive-month">' +
+      return '<details class="archive-month"' + (query ? ' open' : '') + '>' +
         '<summary><span class="ribbon">' + monthLabel(m) + '</span><span class="count">' + groups[m].length + (groups[m].length===1 ? ' file' : ' files') + '</span></summary>' +
         '<div class="drive-list archive-grid">' + groups[m].map(driveItemHtml).join('') + '</div>' +
       '</details>';
@@ -942,6 +2593,59 @@
 
     list.innerHTML = html;
   }
+  document.getElementById('driveSearch').addEventListener('input', debounce(renderDrive, 150));
+
+  // ---------- bulk select (drive) ----------
+  var driveBulkMode = false;
+  function setDriveBulkMode(on){
+    driveBulkMode = on;
+    driveSection.classList.toggle('bulk-mode', on);
+    document.getElementById('driveSelectBtn').hidden = on;
+    document.getElementById('driveBulkBar').hidden = !on;
+    if(!on){
+      Array.prototype.forEach.call(document.querySelectorAll('#driveList .bulk-check'), function(cb){ cb.checked = false; });
+    }
+    updateDriveBulkCount();
+  }
+  function updateDriveBulkCount(){
+    var checked = document.querySelectorAll('#driveList .bulk-check:checked').length;
+    document.getElementById('driveBulkCount').textContent = checked + ' selected';
+  }
+  document.getElementById('driveSelectBtn').addEventListener('click', function(){ setDriveBulkMode(true); });
+  document.getElementById('driveBulkCancel').addEventListener('click', function(){ setDriveBulkMode(false); });
+  document.getElementById('driveList').addEventListener('change', function(e){
+    if(e.target.matches('.bulk-check')) updateDriveBulkCount();
+  });
+  function selectedDriveNames(){
+    return Array.prototype.map.call(document.querySelectorAll('#driveList .bulk-check:checked'), function(cb){
+      return cb.closest('.drive-item').dataset.name;
+    });
+  }
+  document.getElementById('driveBulkDownload').addEventListener('click', function(){
+    var names = selectedDriveNames();
+    if(!names.length) return;
+    names.forEach(function(name, i){
+      setTimeout(function(){
+        var a = document.createElement('a');
+        a.href = '/api/drive/' + encodeURIComponent(name);
+        a.download = displayName(name);
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }, i * 400);
+    });
+  });
+  document.getElementById('driveBulkDelete').addEventListener('click', function(){
+    var names = selectedDriveNames();
+    if(!names.length) return;
+    if(!confirm('Delete ' + names.length + ' file' + (names.length===1?'':'s') + ' for both of you?')) return;
+    driveItems = driveItems.filter(function(d){ return names.indexOf(d.name) < 0; });
+    setDriveBulkMode(false);
+    renderDrive();
+    names.forEach(function(name){
+      api('/api/drive/' + encodeURIComponent(name), {method:'DELETE'}).catch(function(err){ console.warn(err); });
+    });
+  });
   async function loadDrive(){
     try{
       var res = await api('/api/drive');
@@ -952,13 +2656,11 @@
       document.getElementById('driveList').innerHTML = '<p class="empty-note">Could not reach the drive — check your connection.</p>';
     }
   }
-  document.getElementById('driveUploadBtn').addEventListener('click', function(){ document.getElementById('driveInput').click(); });
-  document.getElementById('driveInput').addEventListener('change', async function(e){
-    var files = Array.prototype.slice.call(e.target.files);
-    e.target.value = '';
+  async function uploadFilesToDrive(files){
     if(!files.length) return;
     var toast = document.getElementById('uploadingToast');
-    toast.textContent = 'Uploading to the drive…';
+    var originalToastText = toast.textContent;
+    toast.textContent = files.length>1 ? ('Uploading '+files.length+' files to the drive…') : 'Uploading to the drive…';
     toast.hidden = false;
     for(var i=0;i<files.length;i++){
       try{
@@ -974,19 +2676,1202 @@
       }
     }
     toast.hidden = true;
-    toast.textContent = 'Pinning your photo…';
+    toast.textContent = originalToastText;
+  }
+  document.getElementById('driveUploadBtn').addEventListener('click', function(){ document.getElementById('driveInput').click(); });
+  document.getElementById('driveInput').addEventListener('change', function(e){
+    var files = Array.prototype.slice.call(e.target.files);
+    e.target.value = '';
+    uploadFilesToDrive(files);
+  });
+
+  // ---------- drag and drop onto the drive (desktop/laptop) ----------
+  var driveSection = document.getElementById('driveSection');
+  var dragDepth = 0;
+  driveSection.addEventListener('dragenter', function(e){
+    if(!e.dataTransfer || e.dataTransfer.types.indexOf('Files')<0) return;
+    e.preventDefault();
+    dragDepth++;
+    driveSection.classList.add('drag-over');
+  });
+  driveSection.addEventListener('dragover', function(e){
+    if(!e.dataTransfer || e.dataTransfer.types.indexOf('Files')<0) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  });
+  driveSection.addEventListener('dragleave', function(e){
+    dragDepth = Math.max(0, dragDepth-1);
+    if(dragDepth===0) driveSection.classList.remove('drag-over');
+  });
+  driveSection.addEventListener('drop', function(e){
+    if(!e.dataTransfer || e.dataTransfer.types.indexOf('Files')<0) return;
+    e.preventDefault();
+    dragDepth = 0;
+    driveSection.classList.remove('drag-over');
+    var files = Array.prototype.slice.call(e.dataTransfer.files || []);
+    uploadFilesToDrive(files);
   });
   document.addEventListener('click', function(e){
-    if(!e.target.matches('[data-drive-delete]')) return;
-    var item = e.target.closest('.drive-item');
-    var name = item.dataset.name;
-    if(!confirm('Delete this file from the drive for both of you?')) return;
-    driveItems = driveItems.filter(function(d){ return d.name!==name; });
-    renderDrive();
-    api('/api/drive/' + encodeURIComponent(name), {method:'DELETE'}).catch(function(err){
-      console.warn(err); showError('Could not delete that file — check your connection.');
+    if(e.target.matches('[data-drive-delete]')){
+      var item = e.target.closest('.drive-item');
+      var name = item.dataset.name;
+      var removed = driveItems.filter(function(d){ return d.name===name; })[0];
+      driveItems = driveItems.filter(function(d){ return d.name!==name; });
+      renderDrive();
+      showUndoToast('File removed', 5000,
+        function(){
+          api('/api/drive/' + encodeURIComponent(name), {method:'DELETE'}).catch(function(err){
+            console.warn(err); showError('Could not delete that file — check your connection.');
+          });
+        },
+        function(){ if(removed){ driveItems.unshift(removed); renderDrive(); } }
+      );
+      return;
+    }
+    if(e.target.matches('[data-drive-rename]')){
+      var renameItem = e.target.closest('.drive-item');
+      var oldName = renameItem.dataset.name;
+      var current = displayName(oldName);
+      var next = prompt('Rename file:', current);
+      if(!next || next.trim()===current) return;
+      next = next.trim();
+      api('/api/drive/' + encodeURIComponent(oldName), {
+        method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name: next})
+      }).then(function(res){ return res.json(); }).then(function(result){
+        var d = driveItems.filter(function(x){ return x.name===oldName; })[0];
+        if(d) d.name = result.name;
+        renderDrive();
+      }).catch(function(err){
+        console.warn(err); showError('Could not rename that file — check your connection.');
+      });
+      return;
+    }
+    var playBtn = e.target.closest('[data-play-video]');
+    if(playBtn){
+      var videoUrl = playBtn.getAttribute('data-play-video');
+      var video = document.createElement('video');
+      video.src = videoUrl;
+      video.controls = true;
+      video.autoplay = true;
+      video.preload = 'metadata';
+      playBtn.parentNode.replaceChild(video, playBtn);
+    }
+  });
+
+
+  // ---------- thinking of you ----------
+  document.getElementById('thinkingBtn').addEventListener('click', async function(){
+    var btn = document.getElementById('thinkingBtn');
+    btn.disabled = true;
+    try{
+      var res = await api('/api/thinking-of-you', {method:'POST'});
+      var result = await res.json();
+      btn.textContent = result.throttled ? '💌 Already sent!' : '💌 Sent!';
+    }catch(err){
+      console.warn(err);
+      btn.textContent = '💌 Could not send';
+    }
+    setTimeout(function(){ btn.textContent = '💌 Thinking of You'; btn.disabled = false; }, 2500);
+  });
+
+  // ---------- love notes (chat) ----------
+  var chatPanel = document.getElementById('chatPanel');
+  var chatMessages = [];
+  function chatBubbleHtml(m){
+    var mine = currentUser && m.username === currentUser.username;
+    var body = m.audioUrl
+      ? '<audio controls src="'+escapeHtml(m.audioUrl)+'"></audio>'
+      : escapeHtml(m.text);
+    return '<div class="chat-bubble '+(mine?'mine':'theirs')+'" data-id="'+m.id+'">'+
+      body+
+      (mine ? '<button class="mini-x" type="button" data-chat-delete="'+m.id+'" aria-label="Delete">×</button>' : '')+
+      '<span class="chat-meta">'+escapeHtml(mine?'You':m.author)+' · '+timeAgo(m.createdAt)+'</span>'+
+    '</div>';
+  }
+  function renderChat(){
+    var list = document.getElementById('chatList');
+    if(!chatMessages.length){
+      list.innerHTML = '<p class="empty-note">No notes yet — say something nice.</p>';
+      return;
+    }
+    list.innerHTML = chatMessages.map(chatBubbleHtml).join('');
+    list.scrollTop = list.scrollHeight;
+  }
+  async function loadChat(){
+    try{
+      var res = await api('/api/chat');
+      chatMessages = await res.json();
+      renderChat();
+    }catch(err){
+      console.warn(err);
+      document.getElementById('chatList').innerHTML = '<p class="empty-note">Could not load — check your connection.</p>';
+    }
+  }
+  var chatTypingPollTimer = null;
+  var chatMessagePollTimer = null;
+  async function pollTypingIndicator(){
+    try{
+      var res = await api('/api/chat/typing');
+      var result = await res.json();
+      document.getElementById('typingIndicator').hidden = !result.typing;
+    }catch(err){}
+  }
+  function openChatPanel(){
+    chatPanel.hidden = false;
+    loadChat();
+    clearInterval(chatTypingPollTimer);
+    clearInterval(chatMessagePollTimer);
+    chatTypingPollTimer = setInterval(pollTypingIndicator, 2000);
+    chatMessagePollTimer = setInterval(loadChat, 5000);
+  }
+  function closeChatModal(){
+    chatPanel.hidden = true;
+    clearInterval(chatTypingPollTimer);
+    clearInterval(chatMessagePollTimer);
+  }
+  document.getElementById('chatBubble').addEventListener('click', function(){
+    if(chatPanel.hidden) openChatPanel(); else closeChatModal();
+  });
+  document.getElementById('chatPanelClose').addEventListener('click', closeChatModal);
+
+  var typingSendTimer = null;
+  document.getElementById('chatInput').addEventListener('input', function(){
+    clearTimeout(typingSendTimer);
+    typingSendTimer = setTimeout(function(){
+      api('/api/chat/typing', {method:'POST'}).catch(function(){});
+    }, 200);
+  });
+
+  document.getElementById('chatForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var input = document.getElementById('chatInput');
+    var text = input.value.trim();
+    if(!text) return;
+    input.value = '';
+    try{
+      var res = await api('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:text})});
+      var created = await res.json();
+      created.author = getName();
+      chatMessages.push(created);
+      renderChat();
+    }catch(err){
+      console.warn(err);
+      showError('Could not send that note — check your connection.');
+    }
+  });
+
+  // ---------- voice notes ----------
+  var mediaRecorder = null;
+  var recordedChunks = [];
+  var recordStartedAt = 0;
+  document.getElementById('voiceRecordBtn').addEventListener('click', async function(){
+    var btn = document.getElementById('voiceRecordBtn');
+    if(mediaRecorder && mediaRecorder.state === 'recording'){
+      mediaRecorder.stop();
+      return;
+    }
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      alert('Voice notes are not supported in this browser.');
+      return;
+    }
+    try{
+      var stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      recordedChunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+      recordStartedAt = Date.now();
+      mediaRecorder.addEventListener('dataavailable', function(e){ if(e.data.size>0) recordedChunks.push(e.data); });
+      mediaRecorder.addEventListener('stop', async function(){
+        btn.classList.remove('recording');
+        stream.getTracks().forEach(function(t){ t.stop(); });
+        var duration = (Date.now() - recordStartedAt) / 1000;
+        if(duration < 0.5) return;
+        var blob = new Blob(recordedChunks, {type: mediaRecorder.mimeType || 'audio/webm'});
+        try{
+          var fd = new FormData();
+          fd.append('audio', blob, 'voice.webm');
+          fd.append('duration', String(duration));
+          var res = await api('/api/chat', {method:'POST', body: fd});
+          var created = await res.json();
+          created.author = getName();
+          chatMessages.push(created);
+          renderChat();
+        }catch(err){
+          console.warn(err);
+          showError('Could not send that voice note — check your connection.');
+        }
+      });
+      mediaRecorder.start();
+      btn.classList.add('recording');
+    }catch(err){
+      console.warn(err);
+      alert('Could not access your microphone.');
+    }
+  });
+  document.getElementById('chatList').addEventListener('click', function(e){
+    var id = e.target.getAttribute && e.target.getAttribute('data-chat-delete');
+    if(!id) return;
+    chatMessages = chatMessages.filter(function(m){ return String(m.id)!==String(id); });
+    renderChat();
+    api('/api/chat/'+id, {method:'DELETE'}).catch(function(err){ console.warn(err); });
+  });
+
+  // ---------- date ideas ----------
+  var ideasModal = document.getElementById('ideasModal');
+  var dateIdeas = [];
+  function ideaRowHtml(idea){
+    return '<div class="idea-row'+(idea.done?' done':'')+'" data-id="'+idea.id+'">'+
+      '<input type="checkbox" data-idea-toggle'+(idea.done?' checked':'')+'>'+
+      '<span class="idea-text">'+escapeHtml(idea.text)+'</span>'+
+      '<button type="button" class="mini-x" data-idea-delete aria-label="Delete" style="position:static;opacity:.6;">×</button>'+
+    '</div>';
+  }
+  function renderIdeas(){
+    var list = document.getElementById('ideaList');
+    if(!dateIdeas.length){
+      list.innerHTML = '<p class="empty-note">No ideas yet — add the first one.</p>';
+      return;
+    }
+    list.innerHTML = dateIdeas.map(ideaRowHtml).join('');
+  }
+  async function loadIdeas(){
+    try{
+      var res = await api('/api/date-ideas');
+      dateIdeas = await res.json();
+      renderIdeas();
+    }catch(err){
+      console.warn(err);
+      document.getElementById('ideaList').innerHTML = '<p class="empty-note">Could not load — check your connection.</p>';
+    }
+  }
+  document.getElementById('ideasBtn').addEventListener('click', function(){ ideasModal.hidden = false; loadIdeas(); });
+  document.getElementById('ideasClose').addEventListener('click', function(){ ideasModal.hidden = true; });
+  ideasModal.addEventListener('click', function(e){ if(e.target===ideasModal) ideasModal.hidden = true; });
+  document.getElementById('ideaForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var input = document.getElementById('ideaInput');
+    var text = input.value.trim();
+    if(!text) return;
+    input.value = '';
+    try{
+      var res = await api('/api/date-ideas', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:text})});
+      var created = await res.json();
+      dateIdeas.unshift(created);
+      renderIdeas();
+    }catch(err){
+      console.warn(err);
+      showError('Could not add that idea — check your connection.');
+    }
+  });
+  document.getElementById('ideaList').addEventListener('click', function(e){
+    var row = e.target.closest('.idea-row');
+    if(!row) return;
+    var id = row.dataset.id;
+    if(e.target.matches('[data-idea-delete]')){
+      dateIdeas = dateIdeas.filter(function(i){ return i.id!==id; });
+      renderIdeas();
+      api('/api/date-ideas/'+id, {method:'DELETE'}).catch(function(err){ console.warn(err); });
+    } else if(e.target.matches('[data-idea-toggle]')){
+      var idea = dateIdeas.filter(function(i){ return i.id===id; })[0];
+      if(!idea) return;
+      idea.done = e.target.checked;
+      renderIdeas();
+      api('/api/date-ideas/'+id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({done: idea.done})}).catch(function(err){ console.warn(err); });
+    }
+  });
+
+  // ---------- song of the day ----------
+  var songsModal = document.getElementById('songsModal');
+  var songs = [];
+  function songEmbedInfo(url){
+    try{
+      var u = new URL(url);
+      var host = u.hostname.replace(/^www\./, '');
+      if(host === 'open.spotify.com'){
+        var sm = u.pathname.match(/^\/(track|album|playlist|episode|show)\/([a-zA-Z0-9]+)/);
+        if(sm) return { type:'spotify', src: 'https://open.spotify.com/embed/'+sm[1]+'/'+sm[2] };
+      }
+      if(host === 'youtube.com' || host === 'music.youtube.com'){
+        var v = u.searchParams.get('v');
+        var shorts = u.pathname.match(/^\/shorts\/([a-zA-Z0-9_-]+)/);
+        if(v) return { type:'youtube', src: 'https://www.youtube.com/embed/'+v };
+        if(shorts) return { type:'youtube', src: 'https://www.youtube.com/embed/'+shorts[1] };
+      }
+      if(host === 'youtu.be'){
+        var id = u.pathname.slice(1);
+        if(id) return { type:'youtube', src: 'https://www.youtube.com/embed/'+id };
+      }
+    }catch(e){}
+    return null;
+  }
+  function songRowHtml(s){
+    var embed = songEmbedInfo(s.url);
+    var media = embed
+      ? '<div class="song-embed-wrap '+embed.type+'"><iframe src="'+escapeHtml(embed.src)+'" loading="lazy" allow="encrypted-media; autoplay; clipboard-write; fullscreen; picture-in-picture" allowfullscreen></iframe></div>'
+      : '<a class="song-plain-link" href="'+escapeHtml(s.url)+'" target="_blank" rel="noopener">'+escapeHtml(s.url)+'</a>';
+    return '<div class="song-row" data-id="'+s.id+'">'+
+      (s.trackTitle ? '<div class="song-track-title">'+escapeHtml(s.trackTitle)+(s.trackAuthor?' — '+escapeHtml(s.trackAuthor):'')+'</div>' : '')+
+      media+
+      (s.note ? '<div class="song-note">'+escapeHtml(s.note)+'</div>' : '')+
+      '<span class="chat-meta">'+escapeHtml(s.author)+' · '+timeAgo(s.createdAt)+'</span>'+
+      '<button type="button" class="mini-x song-share-btn" data-song-share aria-label="Share to Story">📤</button>'+
+      '<button type="button" class="mini-x" data-song-delete aria-label="Delete">×</button>'+
+    '</div>';
+  }
+  function renderSongs(){
+    var list = document.getElementById('songList');
+    if(!songs.length){
+      list.innerHTML = '<p class="empty-note">No songs shared yet.</p>';
+      return;
+    }
+    list.innerHTML = songs.map(songRowHtml).join('');
+  }
+  async function loadSongs(){
+    try{
+      var res = await api('/api/songs');
+      songs = await res.json();
+      renderSongs();
+    }catch(err){
+      console.warn(err);
+      document.getElementById('songList').innerHTML = '<p class="empty-note">Could not load — check your connection.</p>';
+    }
+  }
+  document.getElementById('songsBtn').addEventListener('click', function(){ songsModal.hidden = false; loadSongs(); });
+  document.getElementById('songsClose').addEventListener('click', function(){ songsModal.hidden = true; });
+  songsModal.addEventListener('click', function(e){ if(e.target===songsModal) songsModal.hidden = true; });
+  document.getElementById('songForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var urlInput = document.getElementById('songUrlInput');
+    var noteInput = document.getElementById('songNoteInput');
+    var url = urlInput.value.trim();
+    if(!url) return;
+    var note = noteInput.value.trim();
+    try{
+      var res = await api('/api/songs', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({url:url, note:note})});
+      var created = await res.json();
+      created.author = getName();
+      urlInput.value = ''; noteInput.value = '';
+      songs.unshift(created);
+      renderSongs();
+    }catch(err){
+      console.warn(err);
+      showError('Could not share that song — check your connection.');
+    }
+  });
+  document.getElementById('songList').addEventListener('click', function(e){
+    if(!e.target.matches('[data-song-delete]')) return;
+    var row = e.target.closest('.song-row');
+    var id = row.dataset.id;
+    songs = songs.filter(function(s){ return String(s.id)!==String(id); });
+    renderSongs();
+    api('/api/songs/'+id, {method:'DELETE'}).catch(function(err){ console.warn(err); });
+  });
+
+  // ---------- poems ----------
+  var poems = [];
+  function poemCardHtml(p){
+    var mine = currentUser && currentUser.username === 'joshua';
+    return '<div class="poem-card" data-id="'+p.id+'">'+
+      (mine ? '<button class="mini-x" type="button" data-poem-delete="'+p.id+'" aria-label="Delete">×</button>' : '')+
+      (p.title ? '<h4 class="poem-title">'+escapeHtml(p.title)+'</h4>' : '')+
+      '<div class="poem-body">'+escapeHtml(p.body)+'</div>'+
+      '<span class="chat-meta">'+timeAgo(p.created_at)+'</span>'+
+    '</div>';
+  }
+  function renderPoems(){
+    var list = document.getElementById('poemList');
+    document.getElementById('poemCount').textContent = poems.length ? (poems.length + (poems.length===1?' poem':' poems')) : '';
+    if(!poems.length){
+      list.innerHTML = '<p class="empty-note">No poems yet.</p>';
+      return;
+    }
+    list.innerHTML = poems.map(poemCardHtml).join('');
+  }
+  async function loadPoems(){
+    try{
+      var res = await api('/api/poems');
+      poems = await res.json();
+      renderPoems();
+    }catch(err){
+      console.warn(err);
+      document.getElementById('poemList').innerHTML = '<p class="empty-note">Could not load — check your connection.</p>';
+    }
+  }
+  document.getElementById('poemForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var titleInput = document.getElementById('poemTitleInput');
+    var bodyInput = document.getElementById('poemBodyInput');
+    var body = bodyInput.value.trim();
+    if(!body) return;
+    try{
+      var res = await api('/api/poems', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({title: titleInput.value.trim(), body: body})
+      });
+      var created = await res.json();
+      poems.unshift(created);
+      renderPoems();
+      titleInput.value = ''; bodyInput.value = '';
+    }catch(err){
+      console.warn(err);
+      showError('Could not post that poem — check your connection.');
+    }
+  });
+  document.getElementById('poemList').addEventListener('click', function(e){
+    var id = e.target.getAttribute && e.target.getAttribute('data-poem-delete');
+    if(!id) return;
+    poems = poems.filter(function(p){ return String(p.id)!==String(id); });
+    renderPoems();
+    api('/api/poems/'+id, {method:'DELETE'}).catch(function(err){ console.warn(err); });
+  });
+
+  // ---------- wishlist (partner-visible, claim-hidden-from-owner) ----------
+  var wishlistModal = document.getElementById('wishlistModal');
+  var wishlistItems = [];
+  var partnerWishlistItems = [];
+  function wishlistRowHtml(item){
+    return '<div class="idea-row'+(item.done?' done':'')+'" data-id="'+item.id+'">'+
+      '<input type="checkbox" data-wishlist-toggle'+(item.done?' checked':'')+' title="Mark received">'+
+      '<span class="idea-text">'+escapeHtml(item.text)+'</span>'+
+      '<button type="button" class="mini-x" data-wishlist-delete aria-label="Delete" style="position:static;opacity:.6;">×</button>'+
+    '</div>';
+  }
+  function partnerWishlistRowHtml(item){
+    return '<div class="idea-row'+(item.claimed?' claimed':'')+'" data-id="'+item.id+'">'+
+      '<span class="idea-text">'+escapeHtml(item.text)+'</span>'+
+      '<label class="claim-label"><input type="checkbox" data-wishlist-claim'+(item.claimed?' checked':'')+'> I\'ll get this</label>'+
+    '</div>';
+  }
+  function renderWishlist(){
+    var list = document.getElementById('wishlistList');
+    list.innerHTML = wishlistItems.length ? wishlistItems.map(wishlistRowHtml).join('') : '<p class="empty-note">Nothing on your wishlist yet.</p>';
+    var partnerList = document.getElementById('partnerWishlistList');
+    partnerList.innerHTML = partnerWishlistItems.length ? partnerWishlistItems.map(partnerWishlistRowHtml).join('') : '<p class="empty-note">Their wishlist is empty right now.</p>';
+  }
+  async function loadWishlist(){
+    try{
+      var res = await api('/api/wishlist');
+      var result = await res.json();
+      wishlistItems = result.mine;
+      partnerWishlistItems = result.partner;
+      renderWishlist();
+    }catch(err){
+      console.warn(err);
+      document.getElementById('wishlistList').innerHTML = '<p class="empty-note">Could not load — check your connection.</p>';
+    }
+  }
+  document.getElementById('wishlistBtn').addEventListener('click', function(){ wishlistModal.hidden = false; loadWishlist(); });
+  document.getElementById('wishlistClose').addEventListener('click', function(){ wishlistModal.hidden = true; });
+  wishlistModal.addEventListener('click', function(e){ if(e.target===wishlistModal) wishlistModal.hidden = true; });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-wishlist-tab]'), function(tab){
+    tab.addEventListener('click', function(){
+      Array.prototype.forEach.call(document.querySelectorAll('[data-wishlist-tab]'), function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      var isMine = tab.dataset.wishlistTab === 'mine';
+      document.getElementById('myWishlistPane').hidden = !isMine;
+      document.getElementById('partnerWishlistPane').hidden = isMine;
     });
   });
+  document.getElementById('wishlistForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var input = document.getElementById('wishlistInput');
+    var text = input.value.trim();
+    if(!text) return;
+    input.value = '';
+    try{
+      var res = await api('/api/wishlist', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:text})});
+      var created = await res.json();
+      wishlistItems.unshift(created);
+      renderWishlist();
+    }catch(err){
+      console.warn(err);
+      showError('Could not add that item — check your connection.');
+    }
+  });
+  document.getElementById('wishlistList').addEventListener('click', function(e){
+    var row = e.target.closest('.idea-row');
+    if(!row) return;
+    var id = row.dataset.id;
+    if(e.target.matches('[data-wishlist-delete]')){
+      wishlistItems = wishlistItems.filter(function(i){ return i.id!==id; });
+      renderWishlist();
+      api('/api/wishlist/'+id, {method:'DELETE'}).catch(function(err){ console.warn(err); });
+    } else if(e.target.matches('[data-wishlist-toggle]')){
+      var item = wishlistItems.filter(function(i){ return i.id===id; })[0];
+      if(!item) return;
+      item.done = e.target.checked;
+      renderWishlist();
+      api('/api/wishlist/'+id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({done: item.done})}).catch(function(err){ console.warn(err); });
+    }
+  });
+  document.getElementById('partnerWishlistList').addEventListener('click', function(e){
+    if(!e.target.matches('[data-wishlist-claim]')) return;
+    var row = e.target.closest('.idea-row');
+    var id = row.dataset.id;
+    var item = partnerWishlistItems.filter(function(i){ return i.id===id; })[0];
+    if(!item) return;
+    item.claimed = e.target.checked;
+    renderWishlist();
+    api('/api/wishlist/'+id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({claimed: item.claimed})}).catch(function(err){ console.warn(err); });
+  });
+
+  // ---------- highlight reel ----------
+  var highlightsModal = document.getElementById('highlightsModal');
+  var highlightPins = [];
+  var highlightIndex = 0;
+  var highlightTimer = null;
+  function renderHighlight(){
+    if(!highlightPins.length) return;
+    var pin = highlightPins[highlightIndex];
+    var monthTxt = new Date(pin.createdAt).toLocaleDateString(undefined,{month:'long', day:'numeric', year:'numeric'});
+    document.getElementById('highlightStage').innerHTML =
+      '<img src="'+pin.image+'" alt="A shared memory">'+
+      '<div class="highlight-caption">'+escapeHtml(pin.author||'Someone')+' · '+escapeHtml(monthTxt)+
+        ((pin.reactions||[]).length ? ' · ❤️ '+pin.reactions.length : '')+
+      '</div>';
+    document.getElementById('highlightCounter').textContent = (highlightIndex+1)+' / '+highlightPins.length;
+  }
+  function stepHighlight(dir){
+    if(!highlightPins.length) return;
+    highlightIndex = (highlightIndex + dir + highlightPins.length) % highlightPins.length;
+    renderHighlight();
+  }
+  document.getElementById('highlightsBtn').addEventListener('click', function(){
+    highlightPins = notes.filter(function(n){ return (n.reactions||[]).length > 0; })
+      .sort(function(a,b){ return (b.reactions||[]).length - (a.reactions||[]).length; })
+      .slice(0, 30);
+    if(!highlightPins.length){ highlightPins = notes.slice(0, 20); }
+    if(!highlightPins.length){
+      alert('Pin a few photos first, then come back for the highlight reel!');
+      return;
+    }
+    highlightIndex = 0;
+    highlightsModal.hidden = false;
+    renderHighlight();
+    clearInterval(highlightTimer);
+    highlightTimer = setInterval(function(){ stepHighlight(1); }, 4000);
+  });
+  function closeHighlights(){ highlightsModal.hidden = true; clearInterval(highlightTimer); }
+  document.getElementById('highlightsClose').addEventListener('click', closeHighlights);
+  highlightsModal.addEventListener('click', function(e){ if(e.target===highlightsModal) closeHighlights(); });
+  document.getElementById('highlightPrev').addEventListener('click', function(){ clearInterval(highlightTimer); stepHighlight(-1); });
+  document.getElementById('highlightNext').addEventListener('click', function(){ clearInterval(highlightTimer); stepHighlight(1); });
+
+  // ---------- memory movie ----------
+  var memoryMovieModal = document.getElementById('memoryMovieModal');
+  var memoryTimer = null;
+  function buildMemoryStage(){
+    var sorted = notes.slice().sort(function(a,b){ return new Date(a.createdAt) - new Date(b.createdAt); });
+    var stage = document.getElementById('memoryStage');
+    if(!sorted.length){
+      stage.innerHTML = '<p class="empty-note">Pin a few photos first, then come back!</p>';
+      return [];
+    }
+    stage.innerHTML = sorted.map(function(n){
+      return '<div class="memory-thumb" style="--r:'+hashRot(n.id)+'deg"><img src="'+n.image+'" alt="" loading="lazy"></div>';
+    }).join('');
+    return Array.prototype.slice.call(stage.querySelectorAll('.memory-thumb'));
+  }
+  function playMemoryMovie(){
+    var thumbs = buildMemoryStage();
+    var total = thumbs.length;
+    if(!total) return;
+    var interval = Math.max(50, Math.min(400, 12000 / total));
+    var i = 0;
+    clearInterval(memoryTimer);
+    memoryTimer = setInterval(function(){
+      if(i >= total){ clearInterval(memoryTimer); return; }
+      thumbs[i].classList.add('revealed');
+      i++;
+    }, interval);
+  }
+  function closeMemoryMovie(){
+    memoryMovieModal.hidden = true;
+    clearInterval(memoryTimer);
+  }
+  document.getElementById('memoryMovieBtn').addEventListener('click', function(){
+    memoryMovieModal.hidden = false;
+    buildMemoryStage();
+  });
+  document.getElementById('memoryPlayBtn').addEventListener('click', playMemoryMovie);
+  document.getElementById('memoryRestartBtn').addEventListener('click', playMemoryMovie);
+  document.getElementById('memoryMovieClose').addEventListener('click', closeMemoryMovie);
+  memoryMovieModal.addEventListener('click', function(e){ if(e.target===memoryMovieModal) closeMemoryMovie(); });
+
+  // ---------- location picker (map) ----------
+  var locationModal = document.getElementById('locationModal');
+  var locationPickerMapInstance = null;
+  var locationPickerMarker = null;
+  var pendingLocationNoteId = null;
+  var pendingLatLng = null;
+  function openLocationPicker(noteId){
+    var note = findNote(noteId); if(!note) return;
+    if(!lightbox.hidden) closeLightbox();
+    pendingLocationNoteId = noteId;
+    pendingLatLng = (note.lat!=null && note.lng!=null) ? {lat:note.lat, lng:note.lng} : null;
+    locationModal.hidden = false;
+    document.getElementById('locationSave').disabled = !pendingLatLng;
+    setTimeout(function(){
+      var startLatLng = pendingLatLng || {lat:14.5995, lng:120.9842};
+      if(!locationPickerMapInstance){
+        locationPickerMapInstance = L.map('locationPickerMap').setView([startLatLng.lat, startLatLng.lng], pendingLatLng ? 13 : 4);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
+        }).addTo(locationPickerMapInstance);
+        locationPickerMapInstance.on('click', function(e){
+          pendingLatLng = {lat:e.latlng.lat, lng:e.latlng.lng};
+          if(locationPickerMarker) locationPickerMapInstance.removeLayer(locationPickerMarker);
+          locationPickerMarker = L.marker([pendingLatLng.lat, pendingLatLng.lng]).addTo(locationPickerMapInstance);
+          document.getElementById('locationSave').disabled = false;
+        });
+      } else {
+        locationPickerMapInstance.setView([startLatLng.lat, startLatLng.lng], pendingLatLng ? 13 : 4);
+        locationPickerMapInstance.invalidateSize();
+      }
+      if(locationPickerMarker){ locationPickerMapInstance.removeLayer(locationPickerMarker); locationPickerMarker = null; }
+      if(pendingLatLng){
+        locationPickerMarker = L.marker([pendingLatLng.lat, pendingLatLng.lng]).addTo(locationPickerMapInstance);
+      }
+    }, 50);
+  }
+  document.getElementById('locationClear').addEventListener('click', async function(){
+    if(!pendingLocationNoteId) return;
+    var note = findNote(pendingLocationNoteId);
+    if(note){ note.lat = null; note.lng = null; }
+    locationModal.hidden = true;
+    try{
+      await api('/api/notes/'+pendingLocationNoteId, {method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({lat:null,lng:null})});
+    }catch(err){ console.warn(err); }
+  });
+  document.getElementById('locationSave').addEventListener('click', async function(){
+    if(!pendingLocationNoteId || !pendingLatLng) return;
+    var note = findNote(pendingLocationNoteId);
+    if(note){ note.lat = pendingLatLng.lat; note.lng = pendingLatLng.lng; }
+    locationModal.hidden = true;
+    try{
+      await api('/api/notes/'+pendingLocationNoteId, {
+        method:'PATCH', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({lat:pendingLatLng.lat, lng:pendingLatLng.lng})
+      });
+    }catch(err){
+      console.warn(err);
+      showError('Could not save that location — check your connection.');
+    }
+  });
+  locationModal.addEventListener('click', function(e){ if(e.target===locationModal) locationModal.hidden = true; });
+
+  // ---------- calendar (heatmap + events + map) ----------
+  var calendarModal = document.getElementById('calendarModal');
+  var calViewDate = new Date();
+  var calDayMapInstance = null;
+  function notesOnDay(y, m, d){
+    return notes.filter(function(n){
+      var dt = new Date(n.createdAt);
+      return dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d;
+    });
+  }
+  function renderCalendar(){
+    var y = calViewDate.getFullYear(), m = calViewDate.getMonth();
+    document.getElementById('calMonthLabel').textContent = calViewDate.toLocaleDateString(undefined,{month:'long', year:'numeric'});
+    var firstDow = new Date(y, m, 1).getDay();
+    var daysInMonth = new Date(y, m+1, 0).getDate();
+    var today = new Date();
+    var since = coupleSettings.togetherSince ? parseYmd(coupleSettings.togetherSince) : null;
+    var next = coupleSettings.nextDate ? parseYmd(coupleSettings.nextDate) : null;
+    var big = coupleSettings.bigEventDate ? parseYmd(coupleSettings.bigEventDate) : null;
+
+    var html = ['S','M','T','W','T','F','S'].map(function(d){ return '<div class="cal-dow">'+d+'</div>'; }).join('');
+    for(var i=0;i<firstDow;i++){ html += '<div class="cal-day empty"></div>'; }
+    for(var day=1; day<=daysInMonth; day++){
+      var dayNotes = notesOnDay(y, m, day);
+      var isToday = today.getFullYear()===y && today.getMonth()===m && today.getDate()===day;
+      var isMarker = (since && since.getFullYear()===y && since.getMonth()===m && since.getDate()===day) ||
+                     (next && next.getFullYear()===y && next.getMonth()===m && next.getDate()===day) ||
+                     (big && big.getFullYear()===y && big.getMonth()===m && big.getDate()===day);
+      var cls = 'cal-day' + (dayNotes.length ? ' has-pins' : '') + (isMarker ? ' marker' : '') + (isToday ? ' today' : '');
+      html += '<div class="'+cls+'" data-day="'+day+'">'+day+
+        (dayNotes.length ? '<span class="cal-dot">📌</span>' : (isMarker ? '<span class="cal-dot">💞</span>' : ''))+
+      '</div>';
+    }
+    document.getElementById('calendarGrid').innerHTML = html;
+    document.getElementById('calendarDayDetail').hidden = true;
+  }
+  document.getElementById('calendarGrid').addEventListener('click', function(e){
+    var cell = e.target.closest('.cal-day');
+    if(!cell || cell.classList.contains('empty')) return;
+    var day = Number(cell.dataset.day);
+    var y = calViewDate.getFullYear(), m = calViewDate.getMonth();
+    var dayNotes = notesOnDay(y, m, day);
+    var detail = document.getElementById('calendarDayDetail');
+    var dateLabel = new Date(y,m,day).toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+    if(!dayNotes.length){
+      detail.innerHTML = '<p class="empty-note">'+dateLabel+' — nothing pinned that day.</p>';
+      detail.hidden = false;
+      return;
+    }
+    var located = dayNotes.filter(function(n){ return n.lat!=null && n.lng!=null; });
+    detail.innerHTML = '<p class="modal-label">'+dateLabel+'</p>'+
+      '<div class="board-grid">'+dayNotes.map(function(n){
+        return '<div class="card" style="--rot:0deg" data-id="'+n.id+'">'+
+          '<div class="photo-wrap"><img src="'+n.image+'" alt="" loading="lazy" data-open-lightbox>'+
+          '<button type="button" class="expand-btn" data-open-lightbox aria-label="View fullscreen">⤢</button></div>'+
+        '</div>';
+      }).join('')+'</div>'+
+      (located.length ? '<div class="calendar-day-map" id="calendarDayMap"></div>' : '');
+    detail.hidden = false;
+    if(located.length){
+      setTimeout(function(){
+        if(calDayMapInstance){ calDayMapInstance.remove(); calDayMapInstance = null; }
+        calDayMapInstance = L.map('calendarDayMap').setView([located[0].lat, located[0].lng], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
+        }).addTo(calDayMapInstance);
+        located.forEach(function(n){ L.marker([n.lat, n.lng]).addTo(calDayMapInstance); });
+      }, 50);
+    }
+  });
+  document.getElementById('calendarBtn').addEventListener('click', function(){
+    calendarModal.hidden = false;
+    calViewDate = new Date();
+    renderCalendar();
+  });
+  document.getElementById('calendarClose').addEventListener('click', function(){ calendarModal.hidden = true; });
+  calendarModal.addEventListener('click', function(e){ if(e.target===calendarModal) calendarModal.hidden = true; });
+  document.getElementById('calPrevMonth').addEventListener('click', function(){
+    calViewDate = new Date(calViewDate.getFullYear(), calViewDate.getMonth()-1, 1);
+    renderCalendar();
+  });
+  document.getElementById('calNextMonth').addEventListener('click', function(){
+    calViewDate = new Date(calViewDate.getFullYear(), calViewDate.getMonth()+1, 1);
+    renderCalendar();
+  });
+
+  // ---------- full map (all located pins) ----------
+  var fullMapModal = document.getElementById('fullMapModal');
+  var fullMapInstance = null;
+  document.getElementById('viewFullMapBtn').addEventListener('click', function(){
+    var located = notes.filter(function(n){ return n.lat!=null && n.lng!=null; });
+    calendarModal.hidden = true;
+    fullMapModal.hidden = false;
+    document.getElementById('fullMapEmptyNote').hidden = located.length > 0;
+    setTimeout(function(){
+      if(fullMapInstance){ fullMapInstance.remove(); fullMapInstance = null; }
+      var center = located.length ? [located[0].lat, located[0].lng] : [20, 0];
+      fullMapInstance = L.map('fullMapContainer').setView(center, located.length ? 6 : 2);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
+      }).addTo(fullMapInstance);
+      var markers = [];
+      located.forEach(function(n){
+        var m = L.marker([n.lat, n.lng]).addTo(fullMapInstance);
+        m.bindPopup('<img src="'+n.image+'" style="width:120px;height:120px;object-fit:cover;border-radius:6px;display:block;margin-bottom:.3rem;">'+escapeHtml(n.author||'Someone')+' · '+formatDate(n.createdAt));
+        markers.push(m);
+      });
+      if(markers.length > 1){
+        fullMapInstance.fitBounds(L.featureGroup(markers).getBounds().pad(0.2));
+      }
+    }, 50);
+  });
+  document.getElementById('fullMapClose').addEventListener('click', function(){ fullMapModal.hidden = true; });
+  fullMapModal.addEventListener('click', function(e){ if(e.target===fullMapModal) fullMapModal.hidden = true; });
+
+  // ---------- time capsules ----------
+  var capsules = [];
+  function capsuleCardHtml(c){
+    if(c.revealed){
+      return '<div class="capsule-card" data-id="'+c.id+'">'+
+        '<button class="mini-x" type="button" data-capsule-delete="'+c.id+'" aria-label="Delete">×</button>'+
+        (c.title ? '<h4 class="poem-title">'+escapeHtml(c.title)+'</h4>' : '')+
+        '<div class="poem-body">'+escapeHtml(c.body)+'</div>'+
+        '<span class="chat-meta">from '+escapeHtml(c.author)+' · opened '+escapeHtml(c.revealDate)+'</span>'+
+      '</div>';
+    }
+    return '<div class="capsule-card locked" data-id="'+c.id+'">'+
+      '<button class="mini-x" type="button" data-capsule-delete="'+c.id+'" aria-label="Delete">×</button>'+
+      '<span class="capsule-lock">🔒</span>'+
+      '<div class="capsule-open-date">Sealed by '+escapeHtml(c.author)+' — opens '+escapeHtml(c.revealDate)+'</div>'+
+    '</div>';
+  }
+  function renderCapsules(){
+    var list = document.getElementById('capsuleList');
+    document.getElementById('capsuleCount').textContent = capsules.length ? (capsules.length + (capsules.length===1?' capsule':' capsules')) : '';
+    list.innerHTML = capsules.length ? capsules.map(capsuleCardHtml).join('') : '<p class="empty-note">No time capsules yet.</p>';
+  }
+  async function loadCapsules(){
+    try{
+      var res = await api('/api/time-capsules');
+      capsules = await res.json();
+      renderCapsules();
+    }catch(err){
+      console.warn(err);
+      document.getElementById('capsuleList').innerHTML = '<p class="empty-note">Could not load — check your connection.</p>';
+    }
+  }
+  document.getElementById('capsuleForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var titleInput = document.getElementById('capsuleTitleInput');
+    var bodyInput = document.getElementById('capsuleBodyInput');
+    var dateInput = document.getElementById('capsuleDateInput');
+    var body = bodyInput.value.trim();
+    if(!body || !dateInput.value){ alert('Write something and pick an opening date.'); return; }
+    try{
+      var res = await api('/api/time-capsules', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({title: titleInput.value.trim(), body: body, revealDate: dateInput.value})
+      });
+      var created = await res.json();
+      created.author = getName();
+      capsules.push(created);
+      capsules.sort(function(a,b){ return a.revealDate.localeCompare(b.revealDate); });
+      renderCapsules();
+      titleInput.value=''; bodyInput.value=''; dateInput.value='';
+    }catch(err){
+      console.warn(err);
+      showError('Could not seal that capsule — check your connection.');
+    }
+  });
+  document.getElementById('capsuleList').addEventListener('click', function(e){
+    var id = e.target.getAttribute && e.target.getAttribute('data-capsule-delete');
+    if(!id) return;
+    if(!confirm('Delete this time capsule?')) return;
+    capsules = capsules.filter(function(c){ return c.id!==id; });
+    renderCapsules();
+    api('/api/time-capsules/'+id, {method:'DELETE'}).catch(function(err){ console.warn(err); });
+  });
+
+  // ---------- milestone timeline ----------
+  var milestones = [];
+  function milestoneItemHtml(m){
+    var dateLabel = new Date(m.date+'T00:00:00').toLocaleDateString(undefined,{month:'long', day:'numeric', year:'numeric'});
+    return '<div class="milestone-item" data-id="'+m.id+'">'+
+      '<div class="milestone-date">'+escapeHtml(dateLabel)+
+        '<button class="mini-x" type="button" data-milestone-share="'+m.id+'" aria-label="Share to Story" style="position:relative;top:0;">📤</button>'+
+        '<button class="mini-x" type="button" data-milestone-delete="'+m.id+'" aria-label="Delete">×</button></div>'+
+      '<div class="milestone-title">'+escapeHtml(m.title)+'</div>'+
+      (m.note ? '<div class="milestone-note">'+escapeHtml(m.note)+'</div>' : '')+
+      (m.image ? '<img src="'+m.image+'" alt="">' : '')+
+    '</div>';
+  }
+  function renderMilestones(){
+    var list = document.getElementById('milestoneTimeline');
+    document.getElementById('milestoneCount').textContent = milestones.length ? (milestones.length + (milestones.length===1?' milestone':' milestones')) : '';
+    list.innerHTML = milestones.length ? milestones.map(milestoneItemHtml).join('') : '<p class="empty-note">No milestones yet — add your first one.</p>';
+  }
+  async function loadMilestones(){
+    try{
+      var res = await api('/api/milestones');
+      milestones = await res.json();
+      renderMilestones();
+    }catch(err){
+      console.warn(err);
+      document.getElementById('milestoneTimeline').innerHTML = '<p class="empty-note">Could not load — check your connection.</p>';
+    }
+  }
+  document.getElementById('milestoneForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var titleInput = document.getElementById('milestoneTitleInput');
+    var dateInput = document.getElementById('milestoneDateInput');
+    var noteInput = document.getElementById('milestoneNoteInput');
+    var imageInput = document.getElementById('milestoneImageInput');
+    if(!titleInput.value.trim() || !dateInput.value){ alert('Add a title and a date.'); return; }
+    try{
+      var fd = new FormData();
+      fd.append('title', titleInput.value.trim());
+      fd.append('date', dateInput.value);
+      fd.append('note', noteInput.value.trim());
+      if(imageInput.files[0]){
+        var blob = await compressImage(imageInput.files[0]);
+        fd.append('image', blob, 'milestone.jpg');
+      }
+      var res = await api('/api/milestones', {method:'POST', body: fd});
+      var created = await res.json();
+      milestones.push(created);
+      milestones.sort(function(a,b){ return a.date.localeCompare(b.date); });
+      renderMilestones();
+      titleInput.value=''; dateInput.value=''; noteInput.value=''; imageInput.value='';
+    }catch(err){
+      console.warn(err);
+      showError('Could not add that milestone — check your connection.');
+    }
+  });
+  document.getElementById('milestoneTimeline').addEventListener('click', function(e){
+    var id = e.target.getAttribute && e.target.getAttribute('data-milestone-delete');
+    if(!id) return;
+    if(!confirm('Delete this milestone?')) return;
+    milestones = milestones.filter(function(m){ return m.id!==id; });
+    renderMilestones();
+    api('/api/milestones/'+id, {method:'DELETE'}).catch(function(err){ console.warn(err); });
+  });
+
+  // ---------- events (multiple countdowns) ----------
+  var eventsModal = document.getElementById('eventsModal');
+  var upcomingEvents = [];
+  function eventRowHtml(ev){
+    return '<div class="idea-row" data-id="'+ev.id+'">'+
+      '<span class="idea-text">'+escapeHtml(ev.label)+' — '+escapeHtml(new Date(ev.date+'T00:00:00').toLocaleDateString(undefined,{month:'short', day:'numeric', year:'numeric'}))+'</span>'+
+      '<button type="button" class="mini-x" data-event-delete aria-label="Delete" style="position:static;opacity:.6;">×</button>'+
+    '</div>';
+  }
+  function renderEventsModalList(){
+    var list = document.getElementById('eventList');
+    list.innerHTML = upcomingEvents.length ? upcomingEvents.map(eventRowHtml).join('') : '<p class="empty-note">No events yet.</p>';
+  }
+  function renderEventPills(){
+    var wrap = document.getElementById('eventPills');
+    var today = todayStrLocal();
+    var future = upcomingEvents.filter(function(ev){ return ev.date >= today; }).slice(0, 3);
+    var todayMidnight = new Date(); todayMidnight.setHours(0,0,0,0);
+    wrap.innerHTML = future.map(function(ev){
+      var days = daysBetween(todayMidnight, new Date(ev.date+'T00:00:00'));
+      var label = days<=0 ? 'Today!' : ('in ' + days + (days===1?' day':' days'));
+      return '<span class="stat-pill">🎉 '+escapeHtml(ev.label)+' — '+label+'</span>';
+    }).join('');
+  }
+  function todayStrLocal(){
+    var d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  async function loadEvents(){
+    try{
+      var res = await api('/api/events');
+      upcomingEvents = await res.json();
+      renderEventPills();
+      renderEventsModalList();
+    }catch(err){ console.warn(err); }
+  }
+  document.getElementById('manageEventsBtn').addEventListener('click', function(){
+    eventsModal.hidden = false;
+    renderEventsModalList();
+  });
+  document.getElementById('eventsClose').addEventListener('click', function(){ eventsModal.hidden = true; });
+  eventsModal.addEventListener('click', function(e){ if(e.target===eventsModal) eventsModal.hidden = true; });
+  document.getElementById('eventForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var labelInput = document.getElementById('eventLabelInput');
+    var dateInput = document.getElementById('eventDateInput');
+    if(!labelInput.value.trim() || !dateInput.value){ return; }
+    try{
+      var res = await api('/api/events', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({label: labelInput.value.trim(), date: dateInput.value})
+      });
+      var created = await res.json();
+      upcomingEvents.push(created);
+      upcomingEvents.sort(function(a,b){ return a.date.localeCompare(b.date); });
+      renderEventPills();
+      renderEventsModalList();
+      labelInput.value=''; dateInput.value='';
+    }catch(err){
+      console.warn(err);
+      showError('Could not add that event — check your connection.');
+    }
+  });
+  document.getElementById('eventList').addEventListener('click', function(e){
+    if(!e.target.matches('[data-event-delete]')) return;
+    var id = e.target.closest('.idea-row').dataset.id;
+    upcomingEvents = upcomingEvents.filter(function(ev){ return ev.id!==id; });
+    renderEventPills();
+    renderEventsModalList();
+    api('/api/events/'+id, {method:'DELETE'}).catch(function(err){ console.warn(err); });
+  });
+
+  // ---------- couple stats: days together / next date ----------
+  var coupleSettings = { togetherSince: null, nextDate: null, bigEventLabel: null, bigEventDate: null };
+  function daysBetween(a, b){ return Math.round((b - a) / 86400000); }
+  function parseYmd(s){ var p = s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
+  function renderCoupleStats(){
+    var togetherPill = document.getElementById('togetherPill');
+    var nextDatePill = document.getElementById('nextDatePill');
+    var today = new Date(); today.setHours(0,0,0,0);
+
+    if(coupleSettings.togetherSince){
+      var since = parseYmd(coupleSettings.togetherSince);
+      var days = daysBetween(since, today) + 1;
+      togetherPill.textContent = '💞 ' + days + (days===1 ? ' day together' : ' days together');
+      togetherPill.hidden = false;
+      document.getElementById('shareTogetherBtn').hidden = false;
+    } else {
+      togetherPill.hidden = true;
+      document.getElementById('shareTogetherBtn').hidden = true;
+    }
+
+    if(coupleSettings.nextDate){
+      var next = parseYmd(coupleSettings.nextDate);
+      var diff = daysBetween(today, next);
+      var label = next.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+      if(diff > 0) nextDatePill.textContent = '📅 Next date in ' + diff + (diff===1?' day':' days') + ' — ' + label;
+      else if(diff === 0) nextDatePill.textContent = '📅 Date night today!';
+      else nextDatePill.textContent = '📅 Plan your next date';
+      nextDatePill.hidden = false;
+    } else {
+      nextDatePill.hidden = true;
+    }
+
+    var bigEl = document.getElementById('bigCountdown');
+    if(coupleSettings.bigEventLabel && coupleSettings.bigEventDate){
+      var big = parseYmd(coupleSettings.bigEventDate);
+      var bigDiff = daysBetween(today, big);
+      document.getElementById('bigCountdownLabel').textContent = coupleSettings.bigEventLabel;
+      if(bigDiff > 0){
+        document.getElementById('bigCountdownNumber').textContent = bigDiff + (bigDiff===1?' day':' days');
+        document.getElementById('bigCountdownSub').textContent = 'to go — ' + big.toLocaleDateString(undefined,{month:'long', day:'numeric', year:'numeric'});
+      } else if(bigDiff === 0){
+        document.getElementById('bigCountdownNumber').textContent = 'Today! 🎉';
+        document.getElementById('bigCountdownSub').textContent = big.toLocaleDateString(undefined,{month:'long', day:'numeric', year:'numeric'});
+      } else {
+        document.getElementById('bigCountdownNumber').textContent = (-bigDiff) + (bigDiff===-1?' day':' days');
+        document.getElementById('bigCountdownSub').textContent = 'since — ' + big.toLocaleDateString(undefined,{month:'long', day:'numeric', year:'numeric'});
+      }
+      bigEl.hidden = false;
+    } else {
+      bigEl.hidden = true;
+    }
+
+    document.getElementById('setDatesBtn').hidden = !!(coupleSettings.togetherSince || coupleSettings.nextDate);
+  }
+  async function loadSettings(){
+    try{
+      var res = await api('/api/settings');
+      coupleSettings = await res.json();
+      renderCoupleStats();
+    }catch(err){ console.warn(err); }
+  }
+  var datesModal = document.getElementById('datesModal');
+  function openDatesModal(){
+    document.getElementById('togetherSinceInput').value = coupleSettings.togetherSince || '';
+    document.getElementById('nextDateInput').value = coupleSettings.nextDate || '';
+    document.getElementById('bigEventLabelInput').value = coupleSettings.bigEventLabel || '';
+    document.getElementById('bigEventDateInput').value = coupleSettings.bigEventDate || '';
+    datesModal.hidden = false;
+  }
+  document.getElementById('setDatesBtn').addEventListener('click', openDatesModal);
+  document.getElementById('togetherPill').addEventListener('click', openDatesModal);
+  document.getElementById('nextDatePill').addEventListener('click', openDatesModal);
+  document.getElementById('datesCancel').addEventListener('click', function(){ datesModal.hidden = true; });
+  datesModal.addEventListener('click', function(e){ if(e.target===datesModal) datesModal.hidden = true; });
+  document.getElementById('datesSubmit').addEventListener('click', async function(){
+    var togetherSince = document.getElementById('togetherSinceInput').value || null;
+    var nextDate = document.getElementById('nextDateInput').value || null;
+    var bigEventLabel = document.getElementById('bigEventLabelInput').value.trim() || null;
+    var bigEventDate = document.getElementById('bigEventDateInput').value || null;
+    try{
+      var res = await api('/api/settings', {
+        method:'PATCH', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({togetherSince:togetherSince, nextDate:nextDate, bigEventLabel:bigEventLabel, bigEventDate:bigEventDate})
+      });
+      coupleSettings = await res.json();
+      renderCoupleStats();
+      datesModal.hidden = true;
+    }catch(err){
+      console.warn(err);
+      showError('Could not save those dates — check your connection.');
+    }
+  });
+
+  // ---------- notifications (ntfy) ----------
+  var notifyModal = document.getElementById('notifyModal');
+  var notifyInfo = null;
+  document.getElementById('notifyBtn').addEventListener('click', async function(){
+    notifyModal.hidden = false;
+    if(notifyInfo){ return; }
+    var topicEl = document.getElementById('notifyTopic');
+    topicEl.textContent = 'loading…';
+    try{
+      var res = await api('/api/push-info');
+      notifyInfo = await res.json();
+      topicEl.textContent = notifyInfo.topic || 'Not available';
+      document.getElementById('notifyOpenApp').href = notifyInfo.url || '#';
+    }catch(err){
+      console.warn(err);
+      topicEl.textContent = 'Could not load — check your connection.';
+    }
+  });
+  document.getElementById('notifyCopy').addEventListener('click', async function(){
+    if(!notifyInfo || !notifyInfo.topic) return;
+    try{
+      await navigator.clipboard.writeText(notifyInfo.topic);
+      var btn = document.getElementById('notifyCopy');
+      var original = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(function(){ btn.textContent = original; }, 1500);
+    }catch(err){ console.warn(err); }
+  });
+  notifyModal.addEventListener('click', function(e){ if(e.target===notifyModal) notifyModal.hidden = true; });
+
+  // ---------- activity feed ----------
+  var activityModal = document.getElementById('activityModal');
+  function timeAgo(iso){
+    var then = new Date(iso).getTime();
+    if(isNaN(then)) return '';
+    var secs = Math.max(0, Math.round((Date.now() - then) / 1000));
+    if(secs < 60) return 'just now';
+    var mins = Math.round(secs / 60);
+    if(mins < 60) return mins + (mins===1 ? ' minute ago' : ' minutes ago');
+    var hours = Math.round(mins / 60);
+    if(hours < 24) return hours + (hours===1 ? ' hour ago' : ' hours ago');
+    var days = Math.round(hours / 24);
+    if(days < 7) return days + (days===1 ? ' day ago' : ' days ago');
+    return new Date(iso).toLocaleDateString(undefined, {month:'short', day:'numeric'});
+  }
+  async function openActivityModal(){
+    activityModal.hidden = false;
+    var list = document.getElementById('activityList');
+    list.textContent = 'Loading…';
+    try{
+      var res = await api('/api/activity');
+      var rows = await res.json();
+      if(!rows.length){
+        list.innerHTML = '<p class="empty-note">Nothing yet — activity shows up here as you both use the board.</p>';
+        return;
+      }
+      list.innerHTML = rows.map(function(r){
+        return '<div class="activity-row">'+
+          '<span class="activity-message">'+escapeHtml(r.message)+'</span>'+
+          '<span class="activity-time">'+timeAgo(r.created_at)+'</span>'+
+        '</div>';
+      }).join('');
+    }catch(err){
+      console.warn(err);
+      list.innerHTML = '<p class="empty-note">Could not load activity — check your connection.</p>';
+    }
+  }
+  document.getElementById('activityBtn').addEventListener('click', openActivityModal);
+  document.getElementById('activityClose').addEventListener('click', function(){ activityModal.hidden = true; });
+  activityModal.addEventListener('click', function(e){ if(e.target===activityModal) activityModal.hidden = true; });
+
+  // ---------- on this day ----------
+  function dayOfYear(d){ var start = new Date(d.getFullYear(),0,0); return Math.floor((d - start) / 86400000); }
+  function pickOnThisDay(){
+    var cur = currentMonth();
+    var past = notes.filter(function(n){ return n.month !== cur; });
+    if(!past.length) return null;
+    var today = new Date();
+    var mmdd = String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+    var exact = past.filter(function(n){
+      var d = new Date(n.createdAt);
+      return (String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0')) === mmdd;
+    });
+    var pool = exact.length ? exact : past;
+    var seed = today.getFullYear() * 400 + dayOfYear(today);
+    return pool[seed % pool.length];
+  }
+  var currentOtdPick = null;
+  function renderOnThisDay(){
+    var section = document.getElementById('otdSection');
+    var pick = pickOnThisDay();
+    currentOtdPick = pick;
+    if(!pick){ section.hidden = true; return; }
+    section.hidden = false;
+    var monthTxt = new Date(pick.createdAt).toLocaleDateString(undefined, {month:'long', year:'numeric'});
+    document.getElementById('otdCard').innerHTML =
+      '<div class="card" style="--rot:0deg" data-id="'+pick.id+'">'+
+        '<div class="photo-wrap">'+
+          '<img src="'+pick.image+'" alt="A memory from '+escapeHtml(monthTxt)+'" loading="lazy" data-open-lightbox>'+
+          '<button type="button" class="expand-btn" data-open-lightbox aria-label="View fullscreen">⤢</button>'+
+          '<div class="overlay-layer">'+overlayHtml(pick, false)+'</div>'+
+        '</div>'+
+        '<div class="caption"><span class="author" style="color:'+(pick.authorColor||'inherit')+'">'+escapeHtml(pick.author||'Someone')+'</span><span class="date">'+escapeHtml(monthTxt)+'</span></div>'+
+      '</div>';
+  }
 
   // ---------- loading from the API ----------
   async function loadNotes(){
@@ -1007,21 +3892,31 @@
 
   // ---------- init ----------
   async function init(){
+    var me = null;
+    try{
+      var res = await fetch('/api/me');
+      if(res.ok){ me = await res.json(); }
+    }catch(e){}
+
+    if(!me){ showLoginScreen(); return; }
+    if(me.mustChangeCredentials){ showSetupScreen(); return; }
+    currentUser = me;
+    showApp();
     updateWhoChip();
-    if(!localStorage.getItem(NAME_KEY)){ openNameModal(); }
     buildPenColors();
     resizeCanvas();
+    document.getElementById('poemForm').hidden = currentUser.username !== 'joshua';
 
-    await Promise.all([loadNotes(), loadDoodle(), loadDrive()]);
+    await Promise.all([loadNotes(), loadDoodle(), loadDrive(), loadSettings(), loadProfiles(), loadPoems(), loadCapsules(), loadMilestones(), loadEvents()]);
 
     setInterval(function(){
-      if(!document.hidden){ loadNotes(); loadDoodle(); }
+      if(!document.hidden){ loadNotes(); loadDoodle(); loadProfiles(); }
     }, POLL_MS);
     setInterval(function(){
       if(!document.hidden){ loadDrive(); }
     }, DRIVE_POLL_MS);
     document.addEventListener('visibilitychange', function(){
-      if(!document.hidden){ loadNotes(); loadDoodle(); loadDrive(); }
+      if(!document.hidden){ loadNotes(); loadDoodle(); loadDrive(); loadProfiles(); }
     });
   }
   init();

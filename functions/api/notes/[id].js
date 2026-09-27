@@ -1,5 +1,7 @@
+import { announce } from "../../_lib/notify.js";
+
 export async function onRequestPatch(context) {
-  const { env, request, params } = context;
+  const { env, request, params, data, waitUntil } = context;
 
   let body;
   try {
@@ -10,20 +12,36 @@ export async function onRequestPatch(context) {
 
   const sets = [];
   const binds = [];
-  if (Array.isArray(body.stickers)) {
+  let event = null;
+
+  if (Array.isArray(body.reactions)) {
+    sets.push("reactions = ?");
+    binds.push(JSON.stringify(body.reactions));
+    event = { text: " reacted to a pin ❤️", tag: "heart" };
+  } else if (Array.isArray(body.stickers)) {
     sets.push("stickers = ?");
     binds.push(JSON.stringify(body.stickers));
-  }
-  if (Array.isArray(body.notes)) {
+    event = { text: " decorated a pin 🏷️", tag: "label" };
+  } else if (Array.isArray(body.notes)) {
     sets.push("notes = ?");
     binds.push(JSON.stringify(body.notes));
+    event = { text: " added a sticky note ✏️", tag: "pencil2" };
+  } else if (body.lat !== undefined && body.lng !== undefined) {
+    sets.push("lat = ?", "lng = ?");
+    binds.push(body.lat, body.lng);
   }
+
   if (!sets.length) {
     return new Response("Nothing to update", { status: 400 });
   }
   binds.push(params.id);
 
   await env.DB.prepare(`UPDATE notes SET ${sets.join(", ")} WHERE id = ?`).bind(...binds).run();
+
+  if (event) {
+    waitUntil(announce(env, data.user.u, event.text, event.tag));
+  }
+
   return Response.json({ ok: true });
 }
 

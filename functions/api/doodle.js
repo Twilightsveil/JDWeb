@@ -1,3 +1,5 @@
+import { announce } from "../_lib/notify.js";
+
 function todayUTC() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -19,7 +21,7 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { env, request } = context;
+  const { env, request, data, waitUntil } = context;
   let body;
   try {
     body = await request.json();
@@ -32,6 +34,13 @@ export async function onRequestPost(context) {
   await env.DB.prepare(
     "INSERT INTO doodle (id, date, items) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET date = excluded.date, items = excluded.items"
   ).bind(today, JSON.stringify(items)).run();
+
+  // Only notify when a text note was just left — not on every single pen stroke.
+  const last = items[items.length - 1];
+  if (last && last.type === "text") {
+    const text = ' left a note on the doodle board: "' + String(last.text || "").slice(0, 80) + '"';
+    waitUntil(announce(env, data.user.u, text, "pencil2"));
+  }
 
   return Response.json({ ok: true, date: today, items });
 }

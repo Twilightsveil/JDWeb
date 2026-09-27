@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS notes (
   image_key TEXT NOT NULL,
   stickers TEXT NOT NULL DEFAULT '[]',
   notes TEXT NOT NULL DEFAULT '[]',
+  reactions TEXT NOT NULL DEFAULT '[]',
   author TEXT NOT NULL,
   author_color TEXT NOT NULL,
   created_at TEXT NOT NULL,
@@ -16,4 +17,16 @@ CREATE TABLE IF NOT EXISTS doodle (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   date TEXT NOT NULL,
   items TEXT NOT NULL DEFAULT '[]'
+);
+
+CREATE TABLE IF NOT EXISTS users (
+  username TEXT PRIMARY KEY,
+  nickname TEXT NOT NULL,
+  color TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS settings (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  together_since TEXT,
+  next_date TEXT
 );

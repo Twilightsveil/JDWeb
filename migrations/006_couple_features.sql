@@ -1,0 +1,27 @@
+ALTER TABLE users ADD COLUMN avatar_key TEXT;
+ALTER TABLE users ADD COLUMN mood TEXT;
+ALTER TABLE users ADD COLUMN mood_updated_at TEXT;
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL,
+  text TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS date_ideas (
+  id TEXT PRIMARY KEY,
+  text TEXT NOT NULL,
+  done INTEGER NOT NULL DEFAULT 0,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  done_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS songs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL,
+  url TEXT NOT NULL,
+  note TEXT,
+  created_at TEXT NOT NULL
+);

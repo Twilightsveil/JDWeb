@@ -1,17 +1,24 @@
+import { identityFor, allIdentities, resolveIdentity } from "../../_lib/auth.js";
+import { announce } from "../../_lib/notify.js";
+
 function monthOf(iso) {
   return iso.slice(0, 7);
 }
 
-function rowToNote(r) {
+function rowToNote(r, identities) {
+  const live = resolveIdentity(identities, r.username, r.author, r.author_color);
   return {
     id: r.id,
     image: `/images/${r.image_key}`,
     stickers: JSON.parse(r.stickers || "[]"),
     notes: JSON.parse(r.notes || "[]"),
-    author: r.author,
-    authorColor: r.author_color,
+    reactions: JSON.parse(r.reactions || "[]"),
+    author: live.author,
+    authorColor: live.authorColor,
     createdAt: r.created_at,
-    month: r.month
+    month: r.month,
+    lat: r.lat,
+    lng: r.lng
   };
 }
 
@@ -24,12 +31,12 @@ export async function onRequestGet(context) {
     ? env.DB.prepare("SELECT * FROM notes WHERE month = ? ORDER BY created_at DESC LIMIT 500").bind(month)
     : env.DB.prepare("SELECT * FROM notes ORDER BY created_at DESC LIMIT 500");
 
-  const { results } = await stmt.all();
-  return Response.json(results.map(rowToNote));
+  const [{ results }, identities] = await Promise.all([stmt.all(), allIdentities(env)]);
+  return Response.json(results.map(function (r) { return rowToNote(r, identities); }));
 }
 
 export async function onRequestPost(context) {
-  const { env, request } = context;
+  const { env, request, data, waitUntil } = context;
 
   let form;
   try {
@@ -39,9 +46,6 @@ export async function onRequestPost(context) {
   }
 
   const file = form.get("image");
-  const author = String(form.get("author") || "Someone").slice(0, 40);
-  const authorColor = String(form.get("authorColor") || "#c9584a").slice(0, 20);
-
   if (!file || typeof file === "string") {
     return new Response("Missing image", { status: 400 });
   }
@@ -50,6 +54,14 @@ export async function onRequestPost(context) {
   if (bytes.byteLength > 8 * 1024 * 1024) {
     return new Response("Image too large", { status: 413 });
   }
+
+  const latRaw = form.get("lat");
+  const lngRaw = form.get("lng");
+  const lat = latRaw !== null && latRaw !== "" ? Number(latRaw) : null;
+  const lng = lngRaw !== null && lngRaw !== "" ? Number(lngRaw) : null;
+
+  const username = data.user.u;
+  const { author, authorColor } = await identityFor(env, username);
 
   const id = crypto.randomUUID();
   const key = `${id}.jpg`;
@@ -60,17 +72,22 @@ export async function onRequestPost(context) {
   const month = monthOf(now);
 
   await env.DB.prepare(
-    "INSERT INTO notes (id, image_key, stickers, notes, author, author_color, created_at, month) VALUES (?, ?, '[]', '[]', ?, ?, ?, ?)"
-  ).bind(id, key, author, authorColor, now, month).run();
+    "INSERT INTO notes (id, image_key, stickers, notes, reactions, author, author_color, username, created_at, month, lat, lng) VALUES (?, ?, '[]', '[]', '[]', ?, ?, ?, ?, ?, ?, ?)"
+  ).bind(id, key, author, authorColor, username, now, month, lat, lng).run();
+
+  waitUntil(announce(env, username, " pinned a new photo 📌", "camera"));
 
   return Response.json({
     id,
     image: `/images/${key}`,
     stickers: [],
     notes: [],
+    reactions: [],
     author,
     authorColor,
     createdAt: now,
-    month
+    month,
+    lat,
+    lng
   });
 }
